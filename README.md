@@ -1,6 +1,14 @@
-# Welcome to your Expo app 👋
+# Welcome to SnapFlash 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This is a minimalist, AI-powered flashcard app designed to help you build your English-Vietnamese vocabulary decks instantly with just a snap. 
+
+## Workflow of the Flashcard Creation Process
+
+1. **Capture:** The user takes a photo of any physical English text.
+2. **Extract:** The app uses OCR (Optical Character Recognition) to scan the image and extract the text into discrete words.
+3. **Cross-Reference:** The system checks the extracted words against an integrated English-Vietnamese dictionary to identify valid vocabulary.
+4. **Auto-Fill:** The app automatically fetches the translations and definitions from the dictionary to pre-populate the flashcards.
+5. **Review & Edit:** The user reviews the generated list, selects the specific words they want to learn, and can manually edit or update the flashcard details before saving them to their deck.
 
 ## Get started
 
