@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SnapFlash - Neural Core AI OCR</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-container": "#bafd00",
+                      "surface-container-low": "#13131a",
+                      "on-tertiary": "#4a6600",
+                      "on-error-container": "#ffa8a3",
+                      "on-primary-fixed-variant": "#005e64",
+                      "on-primary-fixed": "#003f43",
+                      "on-primary-container": "#005359",
+                      "surface-variant": "#25252e",
+                      "surface-container": "#191921",
+                      "secondary": "#ac89ff",
+                      "tertiary-fixed": "#bafd00",
+                      "on-background": "#f6f2fc",
+                      "error-dim": "#d7383b",
+                      "tertiary": "#e9ffba",
+                      "surface": "#0e0e14",
+                      "secondary-fixed": "#dac9ff",
+                      "on-surface-variant": "#acaab3",
+                      "on-tertiary-fixed": "#344a00",
+                      "on-secondary": "#290067",
+                      "primary": "#8ff5ff",
+                      "tertiary-fixed-dim": "#afee00",
+                      "primary-fixed-dim": "#00deec",
+                      "surface-container-lowest": "#000000",
+                      "surface-dim": "#0e0e14",
+                      "secondary-container": "#7000ff",
+                      "surface-container-highest": "#25252e",
+                      "tertiary-dim": "#afee00",
+                      "on-tertiary-fixed-variant": "#4b6800",
+                      "on-primary": "#005d63",
+                      "error": "#ff716c",
+                      "outline": "#76747d",
+                      "primary-container": "#00eefc",
+                      "outline-variant": "#48474f",
+                      "on-tertiary-container": "#435d00",
+                      "secondary-dim": "#874cff",
+                      "secondary-fixed-dim": "#ceb9ff",
+                      "primary-fixed": "#00eefc",
+                      "inverse-surface": "#fcf8ff",
+                      "primary-dim": "#00deec",
+                      "background": "#0e0e14",
+                      "on-secondary-container": "#f8f1ff",
+                      "surface-container-high": "#1f1f27",
+                      "on-error": "#490006",
+                      "inverse-on-surface": "#55545c",
+                      "on-secondary-fixed": "#41009a",
+                      "inverse-primary": "#006a71",
+                      "error-container": "#9f0519",
+                      "surface-tint": "#8ff5ff",
+                      "on-secondary-fixed-variant": "#6300e2",
+                      "surface-bright": "#2b2b35",
+                      "on-surface": "#f6f2fc"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "fontFamily": {
+                      "headline": [
+                              "Space Grotesk"
+                      ],
+                      "body": [
+                              "Inter"
+                      ],
+                      "label": [
+                              "Inter"
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>body {
+    background-color: #0e0e14;
+    color: #f6f2fc;
+    font-family: "Inter", sans-serif;
+    overflow-x: hidden
+    }
+.font-space-grotesk {
+    font-family: "Space Grotesk", sans-serif
+    }
+.glass-edge {
+    background: linear-gradient(180deg, rgba(143, 245, 255, 0.2) 0%, transparent 100%);
+    padding: 1px
+    }
+.noise-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.03;
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBdmIMDWlyhCHerawFdyb_nDDEVE8Jsnak1a8RKn2qRDFWf0YZhzu0VL4-nQz8WNeJ0Udyi06hQsfnFhDTLfdlPb9n8UXWEkrmuVzYFO7KeGiKyJmfLhptE2h3ilYE7hKWEd39u4WWl4qfadCvBHK56V-Q_H-DizkTJdsL_GnuKV45Ai7Yz_cvEEMQCLI0D0GNmq4ty99T1IjjYRlc1Xji9y_b0Q5ovNyhz96dW3JT8Yk-N_myzJH3-Wh7EWhYEoj-Z9m6bFQcaDoWQ);
+    z-index: 9999
+    }
+.glow-aura-cyan {
+    box-shadow: 0 0 100px rgba(0, 238, 252, 0.08)
+    }
+.pulse-dot {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite
+    }
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+        } 50% {
+        opacity: .5;
+        transform: scale(1.5);
+        }
+    }</style>
+</head>
+<body class="bg-surface selection:bg-primary/30">
+<div class="noise-overlay"></div>
+<!-- Navigation Shell -->
+<nav class="fixed top-0 w-full z-50 bg-[#0e0e14]/60 backdrop-blur-md border-b border-cyan-500/15 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-2">
+<span class="text-2xl font-bold tracking-tighter text-[#8ff5ff] drop-shadow-[0_0_8px_rgba(0,238,252,0.5)] font-space-grotesk">SnapFlash</span>
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div class="hidden md:flex items-center gap-8 font-space-grotesk tracking-tight">
+<a class="text-cyan-400 font-bold border-b-2 border-cyan-400 pb-1" href="#">Features</a>
+<a class="text-slate-400 font-medium hover:text-cyan-200 transition-colors" href="#">Neural Core</a>
+<a class="text-slate-400 font-medium hover:text-cyan-200 transition-colors" href="#">Docs</a>
+<a class="text-slate-400 font-medium hover:text-cyan-200 transition-colors" href="#">Pricing</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-400 hover:bg-cyan-500/10 p-2 rounded-full transition-all">hub</button>
+<button class="bg-primary text-on-primary px-5 py-2 font-bold font-space-grotesk rounded-lg shadow-[0_0_20px_rgba(143,245,255,0.3)] hover:scale-95 duration-100 ease-in-out transition-all">
+                    Initialize AI
+                </button>
+</div>
+</div>
+</nav>
+<main class="pt-24">
+<!-- Hero Section -->
+<section class="relative min-h-[921px] flex flex-col items-center justify-center px-6 overflow-hidden">
+<div class="absolute top-1/4 -left-20 w-96 h-96 bg-primary/10 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-1/4 -right-20 w-96 h-96 bg-secondary/10 blur-[120px] rounded-full"></div>
+<div class="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<div class="z-10 text-left">
+<div class="flex items-center gap-3 mb-6">
+<span class="w-2 h-2 rounded-full bg-primary pulse-dot"></span>
+<span class="font-label text-[0.75rem] uppercase tracking-[0.2em] text-primary">NEURAL VOID PROTOCOL V2.0</span>
+</div>
+<h1 class="font-headline text-[3.5rem] leading-[1.1] font-bold tracking-[-0.04em] text-on-surface mb-6">
+                        Trích xuất dữ liệu <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">với tốc độ ánh sáng</span>
+</h1>
+<p class="font-body text-on-surface-variant text-lg max-w-md mb-10 leading-relaxed">
+                        Hệ thống OCR thế hệ mới sử dụng Neural Core AI để nhận diện văn bản tiếng Việt với độ chính xác tuyệt đối trong mọi môi trường.
+                    </p>
+<div class="flex flex-wrap gap-4">
+<button class="bg-primary text-on-primary px-8 py-4 font-bold font-space-grotesk rounded-xl shadow-[0_0_20px_rgba(143,245,255,0.3)] hover:brightness-110 transition-all flex items-center gap-2">
+                            Bắt đầu ngay <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+<button class="px-8 py-4 font-bold font-space-grotesk rounded-xl border border-secondary/30 text-secondary hover:bg-secondary/10 transition-all">
+                            Khám phá tính năng
+                        </button>
+</div>
+</div>
+<!-- Glassmorphic OCR Visual -->
+<div class="relative z-10">
+<div class="glass-edge rounded-[2rem] overflow-hidden">
+<div class="bg-surface-variant/40 backdrop-blur-[20px] p-6 rounded-[2rem] relative border border-outline-variant/15">
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent"></div>
+<img alt="OCR Scan Visual" class="rounded-xl w-full h-80 object-cover opacity-60 mix-blend-luminosity grayscale contrast-125" data-alt="futuristic digital interface showing AI text recognition process with glowing cyan highlight boxes over complex Vietnamese technical documents" src="./abc.jpg"/>
+<!-- Scanner Line -->
+<div class="absolute top-1/2 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_15px_#8ff5ff] opacity-80"></div>
+<!-- Recognition Nodes -->
+<div class="absolute top-24 left-20 bg-primary/20 backdrop-blur-md px-3 py-1 rounded-md border border-primary/40 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-[10px] font-mono text-primary font-bold">RECOGNIZING: TIẾNG VIỆT</span>
+</div>
+<div class="mt-6 flex flex-col gap-3">
+<div class="h-2 w-3/4 bg-on-surface-variant/20 rounded-full"></div>
+<div class="h-2 w-full bg-on-surface-variant/10 rounded-full"></div>
+<div class="h-2 w-1/2 bg-on-surface-variant/20 rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Floating Data Node -->
+<div class="absolute -bottom-6 -left-6 bg-surface-container-high border border-outline-variant/20 p-4 rounded-xl shadow-2xl backdrop-blur-xl">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-secondary/20 rounded-lg">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<div>
+<div class="text-[10px] text-secondary font-bold uppercase tracking-wider">Neural Latency</div>
+<div class="text-lg font-headline font-bold text-on-surface">0.02ms</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Features Section (Bento Grid) -->
+<section class="py-24 px-6 max-w-7xl mx-auto">
+<div class="text-center mb-16">
+<h2 class="font-headline text-4xl font-bold mb-4">Công nghệ lõi tân tiến</h2>
+<div class="w-16 h-1 bg-primary mx-auto"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Feature 1: Camera -->
+<div class="bg-surface-container border border-outline-variant/15 p-8 rounded-full relative group overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="w-14 h-14 bg-surface-variant rounded-xl flex items-center justify-center mb-8 shadow-[0_0_30px_rgba(0,238,252,0.1)]">
+<span class="material-symbols-outlined text-primary text-3xl">photo_camera</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-4">Thị giác Máy tính</h3>
+<p class="font-body text-on-surface-variant leading-relaxed">
+                        Chụp và xử lý hình ảnh trực tiếp với thuật toán làm nét và khử nhiễu AI tự động.
+                    </p>
+<div class="mt-8 flex items-center gap-2 text-primary font-bold text-sm cursor-pointer group">
+                        Xem chi tiết <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</div>
+</div>
+<!-- Feature 2: Brain -->
+<div class="bg-surface-container-high border border-primary/20 p-8 rounded-full relative overflow-hidden scale-105 z-10 shadow-2xl">
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-secondary/10 blur-[50px] rounded-full"></div>
+<div class="w-14 h-14 bg-secondary/20 rounded-xl flex items-center justify-center mb-8">
+<span class="material-symbols-outlined text-secondary text-3xl" style="font-variation-settings: 'FILL' 1;">neurology</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-4">Neural Engine</h3>
+<p class="font-body text-on-surface-variant leading-relaxed">
+                        Mô hình Deep Learning được huấn luyện đặc thù cho cấu trúc ngôn ngữ và ký tự đặc biệt của tiếng Việt.
+                    </p>
+<div class="mt-8 flex items-center gap-2 text-secondary font-bold text-sm cursor-pointer group">
+                        Xem chi tiết <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</div>
+</div>
+<!-- Feature 3: Sync -->
+<div class="bg-surface-container border border-outline-variant/15 p-8 rounded-full relative group overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="w-14 h-14 bg-surface-variant rounded-xl flex items-center justify-center mb-8 shadow-[0_0_30px_rgba(0,238,252,0.1)]">
+<span class="material-symbols-outlined text-primary text-3xl">sync</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-4">Đồng bộ Cloud</h3>
+<p class="font-body text-on-surface-variant leading-relaxed">
+                        Lưu trữ và truy xuất dữ liệu OCR từ mọi thiết bị với độ trễ thấp nhất thế giới.
+                    </p>
+<div class="mt-8 flex items-center gap-2 text-primary font-bold text-sm cursor-pointer group">
+                        Xem chi tiết <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Tech Stack -->
+<section class="py-20 border-y border-outline-variant/10 bg-surface-container-low/30">
+<div class="max-w-7xl mx-auto px-6">
+<p class="font-label text-center text-on-surface-variant tracking-[0.3em] mb-12">BUILT WITH THE FUTURE STACK</p>
+<div class="flex flex-wrap justify-center items-center gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-700">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-4xl text-primary">flutter_dash</span>
+<span class="font-headline font-bold text-xl">Flutter</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-4xl text-secondary">database</span>
+<span class="font-headline font-bold text-xl">Firebase</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-4xl text-tertiary">memory</span>
+<span class="font-headline font-bold text-xl">AI Core</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-4xl text-primary">terminal</span>
+<span class="font-headline font-bold text-xl">Node.js</span>
+</div>
+</div>
+</div>
+</section>
+<!-- FAQ Section -->
+<section class="py-24 max-w-4xl mx-auto px-6">
+<h2 class="font-headline text-3xl font-bold text-center mb-16 tracking-tight">Câu hỏi thường gặp</h2>
+<div class="space-y-4">
+<!-- Accordion 1 -->
+<div class="group bg-surface-container-low hover:bg-surface-container transition-colors rounded-xl overflow-hidden border border-outline-variant/10">
+<div class="p-6 flex justify-between items-center cursor-pointer">
+<h4 class="font-body font-semibold text-on-surface">SnapFlash có hỗ trợ chữ viết tay không?</h4>
+<span class="material-symbols-outlined text-primary group-hover:rotate-180 transition-transform">expand_more</span>
+</div>
+<div class="px-6 pb-6 text-on-surface-variant font-body text-sm leading-relaxed">
+                        Hiện tại SnapFlash tối ưu nhất cho các văn bản in ấn và tài liệu kỹ thuật số. Tính năng nhận diện chữ viết tay đang được phát triển trong Neural Core v3.0.
+                    </div>
+</div>
+<!-- Accordion 2 -->
+<div class="group bg-surface-container-low hover:bg-surface-container transition-colors rounded-xl overflow-hidden border border-outline-variant/10">
+<div class="p-6 flex justify-between items-center cursor-pointer">
+<h4 class="font-body font-semibold text-on-surface">Dữ liệu của tôi có được bảo mật không?</h4>
+<span class="material-symbols-outlined text-primary group-hover:rotate-180 transition-transform">expand_more</span>
+</div>
+<div class="hidden px-6 pb-6 text-on-surface-variant font-body text-sm leading-relaxed">
+                        SnapFlash sử dụng mã hóa đầu cuối và không lưu trữ hình ảnh gốc của bạn trên máy chủ trừ khi được cho phép.
+                    </div>
+</div>
+<!-- Accordion 3 -->
+<div class="group bg-surface-container-low hover:bg-surface-container transition-colors rounded-xl overflow-hidden border border-outline-variant/10">
+<div class="p-6 flex justify-between items-center cursor-pointer">
+<h4 class="font-body font-semibold text-on-surface">Tốc độ xử lý trung bình là bao lâu?</h4>
+<span class="material-symbols-outlined text-primary group-hover:rotate-180 transition-transform">expand_more</span>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-24 relative overflow-hidden">
+<div class="absolute inset-0 bg-primary/5"></div>
+<div class="max-w-4xl mx-auto px-6 text-center relative z-10">
+<div class="mb-8 inline-block p-4 bg-primary/10 rounded-full border border-primary/20">
+<span class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<h2 class="font-headline text-4xl md:text-5xl font-bold mb-8">Sẵn sàng để số hóa tài liệu của bạn?</h2>
+<div class="flex flex-col md:flex-row gap-6 justify-center">
+<button class="bg-primary text-on-primary px-10 py-5 font-bold font-space-grotesk rounded-xl text-lg shadow-[0_0_30px_rgba(143,245,255,0.4)] hover:scale-105 transition-all">
+                        Xem Demo
+                    </button>
+<button class="bg-surface-container px-10 py-5 font-bold font-space-grotesk rounded-xl text-lg border border-outline-variant/30 hover:border-primary/50 transition-all">
+                        Liên hệ tư vấn
+                    </button>
+</div>
+</div>
+</section> 
+</main>
+<!-- Footer Shell -->
+<footer class="w-full py-12 border-t border-cyan-500/10 bg-[#0e0e14]">
+<div class="flex flex-col md:flex-row justify-between items-center px-8 max-w-7xl mx-auto gap-4">
+<div class="flex flex-col items-center md:items-start gap-2">
+<span class="text-sm font-black text-slate-200">SNAPFLASH</span>
+<span class="font-inter text-[10px] uppercase tracking-[0.2em] text-slate-500">© 2024 SNAPFLASH // NEURAL VOID PROTOCOL</span>
+</div>
+<div class="flex gap-8">
+<a class="font-inter text-[10px] uppercase tracking-[0.2em] text-slate-500 hover:text-[#ac89ff] transition-colors" href="#">Status</a>
+<a class="font-inter text-[10px] uppercase tracking-[0.2em] text-slate-500 hover:text-[#ac89ff] transition-colors" href="#">Privacy</a>
+<a class="font-inter text-[10px] uppercase tracking-[0.2em] text-slate-500 hover:text-[#ac89ff] transition-colors" href="#">Terminal</a>
+<a class="font-inter text-[10px] uppercase tracking-[0.2em] text-slate-500 hover:text-[#ac89ff] transition-colors" href="#">GitHub</a>
+</div>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-slate-500 hover:text-primary cursor-pointer text-sm">share</span>
+<span class="material-symbols-outlined text-slate-500 hover:text-primary cursor-pointer text-sm">language</span>
+</div>
+</div>
+</footer>
+</body></html>
