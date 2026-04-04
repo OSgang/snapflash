@@ -44,3 +44,6 @@ app-example
 
 # vs code
 .vscode/
+
+# codex
+.codex
