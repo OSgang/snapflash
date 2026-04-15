@@ -1,360 +1,1243 @@
 <!DOCTYPE html>
+<html lang="en">
 
-<html class="dark" lang="vi"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>SnapFlash - Neural Core AI OCR</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-          darkMode: "class",
-          theme: {
-            extend: {
-              "colors": {
-                      "tertiary-container": "#bafd00",
-                      "surface-container-low": "#13131a",
-                      "on-tertiary": "#4a6600",
-                      "on-error-container": "#ffa8a3",
-                      "on-primary-fixed-variant": "#005e64",
-                      "on-primary-fixed": "#003f43",
-                      "on-primary-container": "#005359",
-                      "surface-variant": "#25252e",
-                      "surface-container": "#191921",
-                      "secondary": "#ac89ff",
-                      "tertiary-fixed": "#bafd00",
-                      "on-background": "#f6f2fc",
-                      "error-dim": "#d7383b",
-                      "tertiary": "#e9ffba",
-                      "surface": "#0e0e14",
-                      "secondary-fixed": "#dac9ff",
-                      "on-surface-variant": "#acaab3",
-                      "on-tertiary-fixed": "#344a00",
-                      "on-secondary": "#290067",
-                      "primary": "#8ff5ff",
-                      "tertiary-fixed-dim": "#afee00",
-                      "primary-fixed-dim": "#00deec",
-                      "surface-container-lowest": "#000000",
-                      "surface-dim": "#0e0e14",
-                      "secondary-container": "#7000ff",
-                      "surface-container-highest": "#25252e",
-                      "tertiary-dim": "#afee00",
-                      "on-tertiary-fixed-variant": "#4b6800",
-                      "on-primary": "#005d63",
-                      "error": "#ff716c",
-                      "outline": "#76747d",
-                      "primary-container": "#00eefc",
-                      "outline-variant": "#48474f",
-                      "on-tertiary-container": "#435d00",
-                      "secondary-dim": "#874cff",
-                      "secondary-fixed-dim": "#ceb9ff",
-                      "primary-fixed": "#00eefc",
-                      "inverse-surface": "#fcf8ff",
-                      "primary-dim": "#00deec",
-                      "background": "#0e0e14",
-                      "on-secondary-container": "#f8f1ff",
-                      "surface-container-high": "#1f1f27",
-                      "on-error": "#490006",
-                      "inverse-on-surface": "#55545c",
-                      "on-secondary-fixed": "#41009a",
-                      "inverse-primary": "#006a71",
-                      "error-container": "#9f0519",
-                      "surface-tint": "#8ff5ff",
-                      "on-secondary-fixed-variant": "#6300e2",
-                      "surface-bright": "#2b2b35",
-                      "on-surface": "#f6f2fc"
-              },
-              "borderRadius": {
-                      "DEFAULT": "0.125rem",
-                      "lg": "0.25rem",
-                      "xl": "0.5rem",
-                      "full": "0.75rem"
-              },
-              "fontFamily": {
-                      "headline": [
-                              "Space Grotesk"
-                      ],
-                      "body": [
-                              "Inter"
-                      ],
-                      "label": [
-                              "Inter"
-                      ]
-              }
-      },
-          },
-        }
-    </script>
-<style>body {
-    background-color: #0e0e14;
-    color: #f6f2fc;
-    font-family: "Inter", sans-serif;
-    overflow-x: hidden
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnapFlash — Project Landing Page</title>
+  <meta name="description"
+    content="SnapFlash is a mobile learning app that helps Vietnamese learners turn printed English text into study-ready flashcards through an OCR-assisted, low-friction workflow." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4062F3;
+      --primary-2: #5082FF;
+      --accent: #1DA1FA;
+      --accent-soft: #92CEFF;
+      --violet: #5F00D6;
+      --surface: #FFFFFF;
+      --surface-2: #DBDFEA;
+      --surface-3: #5E93DD;
+      --surface-4: #62B1DD;
+      --bg: #F6F6F6;
+      --line: #DBDFEA;
+      --text: #1D2433;
+      --text-soft: #5E6B86;
+      --success-soft: #E0FFCF;
+      --danger-soft: #FFCBCB;
+      --warning-soft: #FF8052;
+      --shadow: 0 18px 40px rgba(64, 98, 243, 0.10);
+      --radius-xl: 32px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --max: 1160px;
     }
-.font-space-grotesk {
-    font-family: "Space Grotesk", sans-serif
+
+    * {
+      box-sizing: border-box;
     }
-.glass-edge {
-    background: linear-gradient(180deg, rgba(143, 245, 255, 0.2) 0%, transparent 100%);
-    padding: 1px
+
+    html {
+      scroll-behavior: smooth;
     }
-.noise-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    opacity: 0.03;
-    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBdmIMDWlyhCHerawFdyb_nDDEVE8Jsnak1a8RKn2qRDFWf0YZhzu0VL4-nQz8WNeJ0Udyi06hQsfnFhDTLfdlPb9n8UXWEkrmuVzYFO7KeGiKyJmfLhptE2h3ilYE7hKWEd39u4WWl4qfadCvBHK56V-Q_H-DizkTJdsL_GnuKV45Ai7Yz_cvEEMQCLI0D0GNmq4ty99T1IjjYRlc1Xji9y_b0Q5ovNyhz96dW3JT8Yk-N_myzJH3-Wh7EWhYEoj-Z9m6bFQcaDoWQ);
-    z-index: 9999
+
+    body {
+      margin: 0;
+      font-family: 'Nunito Sans', sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(146, 206, 255, 0.22), transparent 26%),
+        linear-gradient(180deg, #FCFDFF 0%, var(--bg) 42%, #F9FBFF 100%);
+      line-height: 1.55;
     }
-.glow-aura-cyan {
-    box-shadow: 0 0 100px rgba(0, 238, 252, 0.08)
+
+    img {
+      max-width: 100%;
+      display: block;
     }
-.pulse-dot {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite
+
+    a {
+      color: inherit;
     }
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-        transform: scale(1);
-        } 50% {
-        opacity: .5;
-        transform: scale(1.5);
-        }
-    }</style>
+
+    .container {
+      width: min(calc(100% - 32px), var(--max));
+      margin: 0 auto;
+    }
+
+    .section {
+      padding: 88px 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .lead {
+      margin: 0;
+      max-width: 640px;
+      color: var(--text-soft);
+      font-size: 17px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(64, 98, 243, 0.08);
+      color: var(--primary);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      margin-bottom: 14px;
+    }
+
+    .nav-wrap {
+      padding-top: 20px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      border: 1px solid rgba(64, 98, 243, 0.1);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 24px rgba(64, 98, 243, 0.06);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: var(--shadow);
+    }
+
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-soft);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+    }
+
+    .nav-links a:hover {
+      background: rgba(64, 98, 243, 0.08);
+      color: var(--primary);
+    }
+
+    .hero {
+      padding: 26px 0 70px;
+    }
+
+    .hero-card {
+      margin-top: 22px;
+      padding: clamp(28px, 4vw, 46px);
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 36px;
+      align-items: center;
+      border: 1px solid rgba(64, 98, 243, 0.1);
+      border-radius: 36px;
+      background:
+        radial-gradient(circle at top right, rgba(146, 206, 255, 0.30), transparent 30%),
+        linear-gradient(145deg, #FDFEFF 0%, #EFF5FF 100%);
+      box-shadow: var(--shadow);
+    }
+
+    h1 {
+      margin: 12px 0 16px;
+      font-size: clamp(42px, 7vw, 72px);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+
+    .hero-copy {
+      margin: 0 0 24px;
+      font-size: 18px;
+      color: var(--text-soft);
+      max-width: 600px;
+    }
+
+    .hero-points {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 0 0 28px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(64, 98, 243, 0.10);
+      box-shadow: 0 10px 24px rgba(64, 98, 243, 0.06);
+      font-weight: 700;
+    }
+
+    .chip-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
+      padding: 0 20px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 800;
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 16px 30px rgba(64, 98, 243, 0.22);
+    }
+
+    .btn-secondary {
+      color: var(--primary);
+      background: rgba(64, 98, 243, 0.08);
+      border: 1px solid rgba(64, 98, 243, 0.12);
+    }
+
+    .hero-visual {
+      position: relative;
+      min-height: 540px;
+      display: grid;
+      place-items: center;
+    }
+
+    .hero-stack {
+      position: relative;
+      width: min(100%, 460px);
+      height: 540px;
+    }
+
+    .hero-screen {
+      position: absolute;
+      filter: drop-shadow(0 24px 30px rgba(64, 98, 243, 0.16));
+      transition: transform .25s ease;
+    }
+
+    .hero-screen:hover {
+      transform: translateY(-4px);
+    }
+
+    .hero-screen.main {
+      width: 46%;
+      left: 27%;
+      top: 0;
+      z-index: 3;
+    }
+
+    .hero-screen.left {
+      width: 38%;
+      left: 0;
+      top: 110px;
+      z-index: 2;
+      transform: rotate(-8deg);
+    }
+
+    .hero-screen.right {
+      width: 38%;
+      right: 0;
+      top: 126px;
+      z-index: 1;
+      transform: rotate(8deg);
+    }
+
+    .floating-note {
+      position: absolute;
+      right: 0;
+      bottom: 12px;
+      width: min(250px, 60%);
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(64, 98, 243, 0.12);
+      box-shadow: 0 18px 30px rgba(64, 98, 243, 0.14);
+      backdrop-filter: blur(8px);
+    }
+
+    .floating-note strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    .floating-note span {
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    .grid-3,
+    .grid-2,
+    .feature-grid,
+    .step-grid,
+    .link-grid,
+    .screen-grid,
+    .decision-grid,
+    .system-grid,
+    .swatch-grid,
+    .component-grid {
+      display: grid;
+      gap: 22px;
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .feature-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .step-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .link-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .screen-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .decision-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .system-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .swatch-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .component-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card,
+    .info-card,
+    .feature-card,
+    .step-card,
+    .link-card,
+    .screen-card,
+    .system-card,
+    .decision-card,
+    .component-card {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(64, 98, 243, 0.10);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 16px 32px rgba(64, 98, 243, 0.07);
+    }
+
+    .info-card,
+    .feature-card,
+    .step-card,
+    .link-card,
+    .system-card,
+    .decision-card,
+    .component-card {
+      padding: 24px;
+    }
+
+    .info-card h3,
+    .feature-card h3,
+    .step-card h3,
+    .link-card h3,
+    .screen-card h3,
+    .system-card h3,
+    .decision-card h3,
+    .component-card h3 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+
+    .link-card h3 {
+      color: #000;
+    }
+
+    .info-card p,
+    .feature-card p,
+    .step-card p,
+    .link-card p,
+    .screen-card p,
+    .system-card p,
+    .decision-card p,
+    .component-card p {
+      margin: 0;
+      color: var(--text-soft);
+    }
+
+    .icon-pill {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 18px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      background: linear-gradient(135deg, rgba(64, 98, 243, 0.12), rgba(80, 130, 255, 0.16));
+      color: var(--primary);
+    }
+
+    .step-no {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 14px;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+    }
+
+    .screen-card {
+      padding: 18px;
+    }
+
+    .screen-frame {
+      min-height: 360px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(146, 206, 255, 0.18), rgba(64, 98, 243, 0.04));
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .screen-frame img {
+      max-height: 340px;
+      width: auto;
+      filter: drop-shadow(0 18px 24px rgba(64, 98, 243, 0.16));
+    }
+
+    .screen-labels {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      background: rgba(64, 98, 243, 0.08);
+      color: var(--primary);
+    }
+
+    .tag.green {
+      background: var(--success-soft);
+      color: #4E8C32;
+    }
+
+    .tag.red {
+      background: var(--danger-soft);
+      color: #B14848;
+    }
+
+    .system-card .subhead {
+      margin: 24px 0 14px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      text-transform: uppercase;
+    }
+
+    .swatch {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      text-align: center;
+      padding: 14px 10px;
+      border-radius: 16px;
+      background: var(--surface-soft, rgba(64, 98, 243, 0.03));
+    }
+
+    .swatch-dot {
+      width: 52px;
+      height: 52px;
+      border-radius: 999px;
+      border: 3px solid #111;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+    }
+
+    .swatch label {
+      font-size: 12px;
+      color: var(--text-soft);
+      font-weight: 700;
+    }
+
+    .swatch code {
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text);
+      background: none;
+    }
+
+    .type-sample {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(64, 98, 243, 0.10);
+    }
+
+    .type-sample:last-child {
+      border-bottom: 0;
+    }
+
+    .type-label {
+      font-size: 18px;
+      color: var(--text);
+    }
+
+    .type-weight {
+      font-size: 16px;
+      color: var(--text-soft);
+      font-weight: 700;
+    }
+
+    .type-size {
+      font-size: 16px;
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .type-preview {
+      margin: 20px 0 8px;
+      font-size: 18px;
+      color: var(--text-soft);
+    }
+
+    .type-preview.small {
+      font-size: 16px;
+    }
+
+    .asset-frame {
+      display: grid;
+      place-items: center;
+      min-height: 260px;
+      padding: 20px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(146, 206, 255, 0.12), rgba(64, 98, 243, 0.04));
+      border: 1px dashed rgba(64, 98, 243, 0.18);
+      overflow: hidden;
+    }
+
+    .asset-frame img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .component-card .asset-frame {
+      min-height: 210px;
+      padding: 16px;
+    }
+
+    .component-card .asset-frame img {
+      width: 96%;
+      max-width: 96%;
+    }
+
+    .component-card.component-card-wide {
+      grid-column: 1 / -1;
+    }
+
+    .component-card.component-card-wide .asset-frame {
+      min-height: 260px;
+      padding: 12px;
+    }
+
+    .component-card.component-card-wide .asset-frame img {
+      width: 88%;
+      max-width: 88%;
+    }
+
+    .component-card h4 {
+      margin: 16px 0 8px;
+      font-size: 18px;
+    }
+
+    .decision-card h3 {
+      color: var(--primary);
+      font-style: italic;
+      font-weight: 600;
+    }
+
+    .cta {
+      padding: clamp(28px, 4vw, 42px);
+      border-radius: 32px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color: #fff;
+      box-shadow: 0 24px 44px rgba(64, 98, 243, 0.24);
+    }
+
+    .link-card {
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .link-card a {
+      color: var(--primary);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .link-card a:hover {
+      text-decoration: underline;
+    }
+
+    footer {
+      padding: 32px 0 40px;
+      color: var(--text-soft);
+      text-align: center;
+      font-size: 14px;
+    }
+
+    @media (max-width: 1080px) {
+
+      .hero-card,
+      .screen-grid,
+      .feature-grid,
+      .grid-3,
+      .decision-grid,
+      .link-grid,
+      .step-grid,
+      .system-grid,
+      .component-grid,
+      .swatch-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero-card {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-visual {
+        order: -1;
+      }
+
+      .floating-note {
+        right: 12px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .section {
+        padding: 64px 0;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .screen-grid,
+      .feature-grid,
+      .grid-3,
+      .grid-2,
+      .decision-grid,
+      .link-grid,
+      .step-grid,
+      .system-grid,
+      .component-grid,
+      .swatch-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .hero-stack {
+        height: 500px;
+      }
+
+      .hero-screen.main {
+        width: 50%;
+        left: 25%;
+      }
+
+      .hero-screen.left {
+        width: 42%;
+        top: 130px;
+      }
+
+      .hero-screen.right {
+        width: 42%;
+        top: 140px;
+      }
+
+      .floating-note {
+        position: static;
+        width: 100%;
+        margin-top: 12px;
+      }
+
+      .type-sample {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
-<body class="bg-surface selection:bg-primary/30">
-<div class="noise-overlay"></div>
-<!-- Navigation Shell -->
-<nav class="fixed top-0 w-full z-50 bg-[#0e0e14]/60 backdrop-blur-md border-b border-cyan-500/15 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
-<div class="flex justify-between items-center w-full px-6 py-4 max-w-[1440px] mx-auto">
-<div class="flex items-center gap-2">
-<span class="text-2xl font-bold tracking-tighter text-[#8ff5ff] drop-shadow-[0_0_8px_rgba(0,238,252,0.5)] font-space-grotesk">SnapFlash</span>
-<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">bolt</span>
-</div>
-<div class="hidden md:flex items-center gap-8 font-space-grotesk tracking-tight">
-<a class="text-cyan-400 font-bold border-b-2 border-cyan-400 pb-1" href="#">Features</a>
-<a class="text-slate-400 font-medium hover:text-cyan-200 transition-colors" href="#">Neural Core</a>
-<a class="text-slate-400 font-medium hover:text-cyan-200 transition-colors" href="#">Docs</a>
-<a class="text-slate-400 font-medium hover:text-cyan-200 transition-colors" href="#">Pricing</a>
-</div>
-<div class="flex items-center gap-4">
-<button class="material-symbols-outlined text-slate-400 hover:bg-cyan-500/10 p-2 rounded-full transition-all">hub</button>
-<button class="bg-primary text-on-primary px-5 py-2 font-bold font-space-grotesk rounded-lg shadow-[0_0_20px_rgba(143,245,255,0.3)] hover:scale-95 duration-100 ease-in-out transition-all">
-                    Initialize AI
-                </button>
-</div>
-</div>
-</nav>
-<main class="pt-24">
-<!-- Hero Section -->
-<section class="relative min-h-[921px] flex flex-col items-center justify-center px-6 overflow-hidden">
-<div class="absolute top-1/4 -left-20 w-96 h-96 bg-primary/10 blur-[120px] rounded-full"></div>
-<div class="absolute bottom-1/4 -right-20 w-96 h-96 bg-secondary/10 blur-[120px] rounded-full"></div>
-<div class="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-<div class="z-10 text-left">
-<div class="flex items-center gap-3 mb-6">
-<span class="w-2 h-2 rounded-full bg-primary pulse-dot"></span>
-<span class="font-label text-[0.75rem] uppercase tracking-[0.2em] text-primary">NEURAL VOID PROTOCOL V2.0</span>
-</div>
-<h1 class="font-headline text-[3.5rem] leading-[1.1] font-bold tracking-[-0.04em] text-on-surface mb-6">
-                        Trích xuất dữ liệu <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">với tốc độ ánh sáng</span>
-</h1>
-<p class="font-body text-on-surface-variant text-lg max-w-md mb-10 leading-relaxed">
-                        Hệ thống OCR thế hệ mới sử dụng Neural Core AI để nhận diện văn bản tiếng Việt với độ chính xác tuyệt đối trong mọi môi trường.
-                    </p>
-<div class="flex flex-wrap gap-4">
-<button class="bg-primary text-on-primary px-8 py-4 font-bold font-space-grotesk rounded-xl shadow-[0_0_20px_rgba(143,245,255,0.3)] hover:brightness-110 transition-all flex items-center gap-2">
-                            Bắt đầu ngay <span class="material-symbols-outlined text-sm">arrow_forward</span>
-</button>
-<button class="px-8 py-4 font-bold font-space-grotesk rounded-xl border border-secondary/30 text-secondary hover:bg-secondary/10 transition-all">
-                            Khám phá tính năng
-                        </button>
-</div>
-</div>
-<!-- Glassmorphic OCR Visual -->
-<div class="relative z-10">
-<div class="glass-edge rounded-[2rem] overflow-hidden">
-<div class="bg-surface-variant/40 backdrop-blur-[20px] p-6 rounded-[2rem] relative border border-outline-variant/15">
-<div class="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent"></div>
-<img alt="OCR Scan Visual" class="rounded-xl w-full h-80 object-cover opacity-60 mix-blend-luminosity grayscale contrast-125" data-alt="futuristic digital interface showing AI text recognition process with glowing cyan highlight boxes over complex Vietnamese technical documents" src="./abc.jpg"/>
-<!-- Scanner Line -->
-<div class="absolute top-1/2 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_15px_#8ff5ff] opacity-80"></div>
-<!-- Recognition Nodes -->
-<div class="absolute top-24 left-20 bg-primary/20 backdrop-blur-md px-3 py-1 rounded-md border border-primary/40 flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-primary"></span>
-<span class="text-[10px] font-mono text-primary font-bold">RECOGNIZING: TIẾNG VIỆT</span>
-</div>
-<div class="mt-6 flex flex-col gap-3">
-<div class="h-2 w-3/4 bg-on-surface-variant/20 rounded-full"></div>
-<div class="h-2 w-full bg-on-surface-variant/10 rounded-full"></div>
-<div class="h-2 w-1/2 bg-on-surface-variant/20 rounded-full"></div>
-</div>
-</div>
-</div>
-<!-- Floating Data Node -->
-<div class="absolute -bottom-6 -left-6 bg-surface-container-high border border-outline-variant/20 p-4 rounded-xl shadow-2xl backdrop-blur-xl">
-<div class="flex items-center gap-3">
-<div class="p-2 bg-secondary/20 rounded-lg">
-<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">psychology</span>
-</div>
-<div>
-<div class="text-[10px] text-secondary font-bold uppercase tracking-wider">Neural Latency</div>
-<div class="text-lg font-headline font-bold text-on-surface">0.02ms</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</section>
-<!-- Features Section (Bento Grid) -->
-<section class="py-24 px-6 max-w-7xl mx-auto">
-<div class="text-center mb-16">
-<h2 class="font-headline text-4xl font-bold mb-4">Công nghệ lõi tân tiến</h2>
-<div class="w-16 h-1 bg-primary mx-auto"></div>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<!-- Feature 1: Camera -->
-<div class="bg-surface-container border border-outline-variant/15 p-8 rounded-full relative group overflow-hidden">
-<div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-<div class="w-14 h-14 bg-surface-variant rounded-xl flex items-center justify-center mb-8 shadow-[0_0_30px_rgba(0,238,252,0.1)]">
-<span class="material-symbols-outlined text-primary text-3xl">photo_camera</span>
-</div>
-<h3 class="font-headline text-xl font-bold mb-4">Thị giác Máy tính</h3>
-<p class="font-body text-on-surface-variant leading-relaxed">
-                        Chụp và xử lý hình ảnh trực tiếp với thuật toán làm nét và khử nhiễu AI tự động.
-                    </p>
-<div class="mt-8 flex items-center gap-2 text-primary font-bold text-sm cursor-pointer group">
-                        Xem chi tiết <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-</div>
-</div>
-<!-- Feature 2: Brain -->
-<div class="bg-surface-container-high border border-primary/20 p-8 rounded-full relative overflow-hidden scale-105 z-10 shadow-2xl">
-<div class="absolute -top-10 -right-10 w-32 h-32 bg-secondary/10 blur-[50px] rounded-full"></div>
-<div class="w-14 h-14 bg-secondary/20 rounded-xl flex items-center justify-center mb-8">
-<span class="material-symbols-outlined text-secondary text-3xl" style="font-variation-settings: 'FILL' 1;">neurology</span>
-</div>
-<h3 class="font-headline text-xl font-bold mb-4">Neural Engine</h3>
-<p class="font-body text-on-surface-variant leading-relaxed">
-                        Mô hình Deep Learning được huấn luyện đặc thù cho cấu trúc ngôn ngữ và ký tự đặc biệt của tiếng Việt.
-                    </p>
-<div class="mt-8 flex items-center gap-2 text-secondary font-bold text-sm cursor-pointer group">
-                        Xem chi tiết <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-</div>
-</div>
-<!-- Feature 3: Sync -->
-<div class="bg-surface-container border border-outline-variant/15 p-8 rounded-full relative group overflow-hidden">
-<div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-<div class="w-14 h-14 bg-surface-variant rounded-xl flex items-center justify-center mb-8 shadow-[0_0_30px_rgba(0,238,252,0.1)]">
-<span class="material-symbols-outlined text-primary text-3xl">sync</span>
-</div>
-<h3 class="font-headline text-xl font-bold mb-4">Đồng bộ Cloud</h3>
-<p class="font-body text-on-surface-variant leading-relaxed">
-                        Lưu trữ và truy xuất dữ liệu OCR từ mọi thiết bị với độ trễ thấp nhất thế giới.
-                    </p>
-<div class="mt-8 flex items-center gap-2 text-primary font-bold text-sm cursor-pointer group">
-                        Xem chi tiết <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-</div>
-</div>
-</div>
-</section>
-<!-- Tech Stack -->
-<section class="py-20 border-y border-outline-variant/10 bg-surface-container-low/30">
-<div class="max-w-7xl mx-auto px-6">
-<p class="font-label text-center text-on-surface-variant tracking-[0.3em] mb-12">BUILT WITH THE FUTURE STACK</p>
-<div class="flex flex-wrap justify-center items-center gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-700">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-4xl text-primary">flutter_dash</span>
-<span class="font-headline font-bold text-xl">Flutter</span>
-</div>
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-4xl text-secondary">database</span>
-<span class="font-headline font-bold text-xl">Firebase</span>
-</div>
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-4xl text-tertiary">memory</span>
-<span class="font-headline font-bold text-xl">AI Core</span>
-</div>
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-4xl text-primary">terminal</span>
-<span class="font-headline font-bold text-xl">Node.js</span>
-</div>
-</div>
-</div>
-</section>
-<!-- FAQ Section -->
-<section class="py-24 max-w-4xl mx-auto px-6">
-<h2 class="font-headline text-3xl font-bold text-center mb-16 tracking-tight">Câu hỏi thường gặp</h2>
-<div class="space-y-4">
-<!-- Accordion 1 -->
-<div class="group bg-surface-container-low hover:bg-surface-container transition-colors rounded-xl overflow-hidden border border-outline-variant/10">
-<div class="p-6 flex justify-between items-center cursor-pointer">
-<h4 class="font-body font-semibold text-on-surface">SnapFlash có hỗ trợ chữ viết tay không?</h4>
-<span class="material-symbols-outlined text-primary group-hover:rotate-180 transition-transform">expand_more</span>
-</div>
-<div class="px-6 pb-6 text-on-surface-variant font-body text-sm leading-relaxed">
-                        Hiện tại SnapFlash tối ưu nhất cho các văn bản in ấn và tài liệu kỹ thuật số. Tính năng nhận diện chữ viết tay đang được phát triển trong Neural Core v3.0.
-                    </div>
-</div>
-<!-- Accordion 2 -->
-<div class="group bg-surface-container-low hover:bg-surface-container transition-colors rounded-xl overflow-hidden border border-outline-variant/10">
-<div class="p-6 flex justify-between items-center cursor-pointer">
-<h4 class="font-body font-semibold text-on-surface">Dữ liệu của tôi có được bảo mật không?</h4>
-<span class="material-symbols-outlined text-primary group-hover:rotate-180 transition-transform">expand_more</span>
-</div>
-<div class="hidden px-6 pb-6 text-on-surface-variant font-body text-sm leading-relaxed">
-                        SnapFlash sử dụng mã hóa đầu cuối và không lưu trữ hình ảnh gốc của bạn trên máy chủ trừ khi được cho phép.
-                    </div>
-</div>
-<!-- Accordion 3 -->
-<div class="group bg-surface-container-low hover:bg-surface-container transition-colors rounded-xl overflow-hidden border border-outline-variant/10">
-<div class="p-6 flex justify-between items-center cursor-pointer">
-<h4 class="font-body font-semibold text-on-surface">Tốc độ xử lý trung bình là bao lâu?</h4>
-<span class="material-symbols-outlined text-primary group-hover:rotate-180 transition-transform">expand_more</span>
-</div>
-</div>
-</div>
-</section>
-<!-- CTA Section -->
-<section class="py-24 relative overflow-hidden">
-<div class="absolute inset-0 bg-primary/5"></div>
-<div class="max-w-4xl mx-auto px-6 text-center relative z-10">
-<div class="mb-8 inline-block p-4 bg-primary/10 rounded-full border border-primary/20">
-<span class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
-</div>
-<h2 class="font-headline text-4xl md:text-5xl font-bold mb-8">Sẵn sàng để số hóa tài liệu của bạn?</h2>
-<div class="flex flex-col md:flex-row gap-6 justify-center">
-<button class="bg-primary text-on-primary px-10 py-5 font-bold font-space-grotesk rounded-xl text-lg shadow-[0_0_30px_rgba(143,245,255,0.4)] hover:scale-105 transition-all">
-                        Xem Demo
-                    </button>
-<button class="bg-surface-container px-10 py-5 font-bold font-space-grotesk rounded-xl text-lg border border-outline-variant/30 hover:border-primary/50 transition-all">
-                        Liên hệ tư vấn
-                    </button>
-</div>
-</div>
-</section> 
-</main>
-<!-- Footer Shell -->
-<footer class="w-full py-12 border-t border-cyan-500/10 bg-[#0e0e14]">
-<div class="flex flex-col md:flex-row justify-between items-center px-8 max-w-7xl mx-auto gap-4">
-<div class="flex flex-col items-center md:items-start gap-2">
-<span class="text-sm font-black text-slate-200">SNAPFLASH</span>
-<span class="font-inter text-[10px] uppercase tracking-[0.2em] text-slate-500">© 2024 SNAPFLASH // NEURAL VOID PROTOCOL</span>
-</div>
-<div class="flex gap-8">
-<a class="font-inter text-[10px] uppercase tracking-[0.2em] text-slate-500 hover:text-[#ac89ff] transition-colors" href="#">Status</a>
-<a class="font-inter text-[10px] uppercase tracking-[0.2em] text-slate-500 hover:text-[#ac89ff] transition-colors" href="#">Privacy</a>
-<a class="font-inter text-[10px] uppercase tracking-[0.2em] text-slate-500 hover:text-[#ac89ff] transition-colors" href="#">Terminal</a>
-<a class="font-inter text-[10px] uppercase tracking-[0.2em] text-slate-500 hover:text-[#ac89ff] transition-colors" href="#">GitHub</a>
-</div>
-<div class="flex gap-4">
-<span class="material-symbols-outlined text-slate-500 hover:text-primary cursor-pointer text-sm">share</span>
-<span class="material-symbols-outlined text-slate-500 hover:text-primary cursor-pointer text-sm">language</span>
-</div>
-</div>
-</footer>
-</body></html>
+
+<body>
+  <div class="container nav-wrap">
+    <nav class="nav" aria-label="Main navigation">
+      <div class="brand">
+        <div class="brand-mark">S</div>
+        <span>SnapFlash</span>
+      </div>
+      <div class="nav-links">
+        <a href="#overview">About SnapFlash</a>
+        <a href="#features">Features</a>
+        <a href="#screens">Screens</a>
+        <a href="#system">Visual system</a>
+        <a href="#links">Links</a>
+      </div>
+    </nav>
+  </div>
+
+  <div class="container">
+    <header class="hero">
+      <div class="hero-card">
+        <div>
+          <span class="eyebrow">Language learning app</span>
+          <h1>Snap once.<br />Flash learning.</h1>
+          <p class="hero-copy">
+            SnapFlash is a mobile learning app that helps Vietnamese learners turn printed English text into study-ready
+            flashcards through an OCR-assisted, low-friction workflow.
+          </p>
+
+          <div class="hero-points">
+            <div class="chip"><span class="chip-dot"></span> Fast capture</div>
+            <div class="chip"><span class="chip-dot"></span> Clear review</div>
+            <div class="chip"><span class="chip-dot"></span> Focused study</div>
+          </div>
+
+          <div class="actions">
+            <a class="btn btn-primary"
+              href="https://www.figma.com/design/1LfZ6g2gqVZyitBcFLqmNl/SnapFlash--OSGang---L02-?node-id=0-1&p=f&t=igzPfVDgkaCqaBqy-0"
+              target="_blank" rel="noopener noreferrer">View Figma File</a>
+            <a class="btn btn-secondary" href="#links">See project links</a>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div class="hero-stack">
+            <img class="hero-screen main" src="screens/screen-home.png" alt="SnapFlash home screen" />
+            <img class="hero-screen left" src="screens/screen-capture.png" alt="SnapFlash capture screen" />
+            <img class="hero-screen right" src="screens/screen-study.png" alt="SnapFlash study screen" />
+          </div>
+        </div>
+      </div>
+    </header>
+  </div>
+
+  <main>
+    <section class="section" id="overview">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">About SnapFlash</span>
+            <h2>Built for faster vocabulary learning</h2>
+          </div>
+          <p class="lead">A quick look at the problem SnapFlash solves, the learners it is made for, and the value it
+            brings to everyday study.</p>
+        </div>
+
+        <div class="grid-3">
+          <article class="info-card">
+            <div class="icon-pill">⚠️</div>
+            <h3>Problem statement</h3>
+            <p>Flashcards are effective for vocabulary retention, but manual card creation is slow and repetitive. The
+              setup effort interrupts reading and reduces learner motivation before studying begins.</p>
+          </article>
+
+          <article class="info-card">
+            <div class="icon-pill">🎯</div>
+            <h3>Target users</h3>
+            <p>SnapFlash is designed for Vietnamese students, self-learners, and young professionals who want a faster
+              way to collect vocabulary from textbooks and printed materials.</p>
+          </article>
+
+          <article class="info-card">
+            <div class="icon-pill">✨</div>
+            <h3>Value proposition</h3>
+            <p>By combining text capture, word review, deck organization, and lightweight study sessions, SnapFlash
+              helps users spend less time typing and more time learning.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">What you can do</span>
+            <h2>Core features</h2>
+          </div>
+          <p class="lead">SnapFlash focuses on the essentials: capturing vocabulary, saving it into decks, and reviewing
+            it through a simple study flow.</p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature-card">
+            <div class="icon-pill">📸</div>
+            <h3>Extract text from images</h3>
+            <p>Users scan or upload printed English text to start the flashcard creation flow.</p>
+          </article>
+          <article class="feature-card">
+            <div class="icon-pill">✅</div>
+            <h3>Review and select words</h3>
+            <p>Detected vocabulary is reviewed before saving, keeping users in control of accuracy.</p>
+          </article>
+          <article class="feature-card">
+            <div class="icon-pill">🗂️</div>
+            <h3>Save into decks</h3>
+            <p>Selected vocabulary is organized into decks for later study and review.</p>
+          </article>
+          <article class="feature-card">
+            <div class="icon-pill">✏️</div>
+            <h3>Manual flashcard creation</h3>
+            <p>Users can add their own cards whenever OCR is not needed or a quick add is faster.</p>
+          </article>
+          <article class="feature-card">
+            <div class="icon-pill">🧠</div>
+            <h3>Basic review mode</h3>
+            <p>Flashcards are presented through a focused study flow with clear review feedback.</p>
+          </article>
+          <article class="feature-card">
+            <div class="icon-pill">🎨</div>
+            <h3>Consistent visual system</h3>
+            <p>The product uses a calm blue palette, Nunito Sans typography, reusable components, and simple
+              iconography.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Product flow</span>
+            <h2>A simple path from scan to study</h2>
+          </div>
+          <p class="lead">The main experience is built to feel quick, clear, and easy to follow from the first scan to
+            the final review.</p>
+        </div>
+
+        <div class="step-grid">
+          <article class="step-card">
+            <div class="step-no">1</div>
+            <h3>Capture</h3>
+            <p>The user scans or uploads a printed English document.</p>
+          </article>
+          <article class="step-card">
+            <div class="step-no">2</div>
+            <h3>Review</h3>
+            <p>The app highlights and lists candidate words for user selection and editing.</p>
+          </article>
+          <article class="step-card">
+            <div class="step-no">3</div>
+            <h3>Save</h3>
+            <p>Chosen flashcards are added to a deck for future study.</p>
+          </article>
+          <article class="step-card">
+            <div class="step-no">4</div>
+            <h3>Study</h3>
+            <p>The learner reviews flashcards through a lightweight, repeatable study screen.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="screens">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Interface highlights</span>
+            <h2>A closer look at the product</h2>
+          </div>
+          <p class="lead">These screens highlight the key moments of the experience, from capturing text to organizing
+            decks and reviewing cards.</p>
+        </div>
+
+        <div class="screen-grid">
+          <article class="screen-card">
+            <div class="screen-frame"><img src="screens/screen-capture.png" alt="Capture screen" loading="lazy" /></div>
+            <h3>Capture text</h3>
+            <p>Capture printed English text and start building flashcards right away.</p>
+            <div class="screen-labels"><span class="tag">OCR flow</span><span class="tag">Input capture</span></div>
+          </article>
+
+          <article class="screen-card">
+            <div class="screen-frame"><img src="screens/screen-review.png" alt="Review words screen" loading="lazy" />
+            </div>
+            <h3>Review extracted words</h3>
+            <p>Review suggested words, make quick edits, and choose what to save.</p>
+            <div class="screen-labels"><span class="tag">User control</span><span class="tag red">Edit before
+                save</span></div>
+          </article>
+
+          <article class="screen-card">
+            <div class="screen-frame"><img src="screens/screen-home.png" alt="Home screen" loading="lazy" /></div>
+            <h3>About SnapFlash home</h3>
+            <p>The home screen brings together decks, study progress, and recent activity in one place.</p>
+            <div class="screen-labels"><span class="tag">Dashboard</span><span class="tag green">About SnapFlash</span>
+            </div>
+          </article>
+
+          <article class="screen-card">
+            <div class="screen-frame"><img src="screens/screen-overview.png" alt="Deck management screen"
+                loading="lazy" /></div>
+            <h3>Organize into decks</h3>
+            <p>Organize vocabulary into decks that fit different subjects, topics, and goals.</p>
+            <div class="screen-labels"><span class="tag">Decks</span><span class="tag">Collections</span></div>
+          </article>
+
+          <article class="screen-card">
+            <div class="screen-frame"><img src="screens/screen-collections.png" alt="Collections screen"
+                loading="lazy" /></div>
+            <h3>Browse collections</h3>
+            <p>Collections make it easy to check progress and jump into study or editing.</p>
+            <div class="screen-labels"><span class="tag">Manage cards</span><span class="tag green">Progress</span>
+            </div>
+          </article>
+
+          <article class="screen-card">
+            <div class="screen-frame"><img src="screens/screen-study.png" alt="Study screen" loading="lazy" /></div>
+            <h3>Study and review</h3>
+            <p>The study screen keeps repetition light, focused, and easy to continue.</p>
+            <div class="screen-labels"><span class="tag">Study mode</span><span class="tag green">Review</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="system">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Visual system</span>
+            <h2>A calm and consistent visual system</h2>
+          </div>
+          <p class="lead">The visual system keeps the product calm, clean, and easy to navigate with a soft blue
+            palette, readable typography, and reusable UI elements.</p>
+        </div>
+
+        <div class="system-grid">
+          <article class="system-card">
+            <h3>Color palette</h3>
+            <p>A soft blue palette and light surfaces create a calm learning environment, while gentle accent colors
+              support feedback and progress.</p>
+
+            <div class="subhead">Primary colors</div>
+            <div class="swatch-grid">
+              <div class="swatch">
+                <div class="swatch-dot" style="background:#4062F3"></div><label>Primary</label><code>#4062F3</code>
+              </div>
+              <div class="swatch">
+                <div class="swatch-dot" style="background:#5082FF"></div><label>Primary alt</label><code>#5082FF</code>
+              </div>
+              <div class="swatch">
+                <div class="swatch-dot" style="background:#1DA1FA"></div><label>Accent</label><code>#1DA1FA</code>
+              </div>
+              <div class="swatch">
+                <div class="swatch-dot" style="background:#92CEFF"></div><label>Accent soft</label><code>#92CEFF</code>
+              </div>
+            </div>
+
+            <div class="subhead">Background / surface colors</div>
+            <div class="swatch-grid">
+              <div class="swatch">
+                <div class="swatch-dot" style="background:#5F00D6"></div><label>Violet</label><code>#5F00D6</code>
+              </div>
+              <div class="swatch">
+                <div class="swatch-dot" style="background:#5E93DD"></div><label>Surface 1</label><code>#5E93DD</code>
+              </div>
+              <div class="swatch">
+                <div class="swatch-dot" style="background:#62B1DD"></div><label>Surface 2</label><code>#62B1DD</code>
+              </div>
+              <div class="swatch">
+                <div class="swatch-dot" style="background:#DBDFEA"></div><label>Stroke</label><code>#DBDFEA</code>
+              </div>
+            </div>
+
+            <div class="subhead">Small accent colors</div>
+            <div class="swatch-grid" style="grid-template-columns: repeat(3, minmax(0,1fr));">
+              <div class="swatch">
+                <div class="swatch-dot" style="background:#FF8052"></div><label>Warning</label><code>#FF8052</code>
+              </div>
+              <div class="swatch">
+                <div class="swatch-dot" style="background:#FFCBCB"></div><label>Soft danger</label><code>#FFCBCB</code>
+              </div>
+              <div class="swatch">
+                <div class="swatch-dot" style="background:#E0FFCF"></div><label>Soft success</label><code>#E0FFCF</code>
+              </div>
+            </div>
+          </article>
+
+          <article class="system-card">
+            <h3>Typography</h3>
+            <p>Nunito Sans gives the interface a friendly and readable tone across headings, labels, and study content.
+            </p>
+
+            <div class="type-sample">
+              <div class="type-label" style="font-size:32px;font-weight:700;">Heading 1</div>
+              <div class="type-weight">Bold</div>
+              <div class="type-size">32px</div>
+            </div>
+            <div class="type-sample">
+              <div class="type-label" style="font-size:30px;font-weight:600;">Heading 2</div>
+              <div class="type-weight">Semibold</div>
+              <div class="type-size">30px</div>
+            </div>
+            <div class="type-sample">
+              <div class="type-label" style="font-size:27px;font-weight:500;">Heading 3</div>
+              <div class="type-weight">Medium</div>
+              <div class="type-size">27px</div>
+            </div>
+            <div class="type-sample">
+              <div class="type-label" style="font-size:25px;font-weight:400;">Heading 4</div>
+              <div class="type-weight">Regular</div>
+              <div class="type-size">25px</div>
+            </div>
+            <div class="type-sample">
+              <div class="type-label" style="font-size:22px;font-weight:300;">Heading 5</div>
+              <div class="type-weight">Light</div>
+              <div class="type-size">22px</div>
+            </div>
+
+            <p class="type-preview">A quick brown fox jumps over a lazy dog.</p>
+            <p class="type-preview small" style="font-weight:600;">A quick brown fox jumps over a lazy dog.</p>
+            <p class="type-preview small" style="font-weight:400;">A quick brown fox jumps over a lazy dog.</p>
+          </article>
+
+          <article class="system-card">
+            <h3>Iconography</h3>
+            <p>Simple icons support navigation, actions, and study feedback without adding visual noise.</p>
+            <div class="asset-frame">
+              <img src="assets/icons-grid.png" alt="SnapFlash iconography cropped from the Canva design system"
+                loading="lazy" />
+            </div>
+          </article>
+
+          <article class="system-card">
+            <h3>Components</h3>
+            <p>Reusable components help the product feel consistent across onboarding, deck management, and study
+              screens.</p>
+            <div class="component-grid">
+              <article class="component-card">
+                <div class="asset-frame"><img src="assets/comp-buttons.png" alt="Button component set" loading="lazy" />
+                </div>
+                <h4>Buttons</h4>
+                <p>Primary button treatments for onboarding and actions.</p>
+              </article>
+              <article class="component-card">
+                <div class="asset-frame"><img src="assets/comp-input.png" alt="Input component set" loading="lazy" />
+                </div>
+                <h4>Inputs</h4>
+                <p>Text inputs for sign-in and word entry.</p>
+              </article>
+              <article class="component-card">
+                <div class="asset-frame"><img src="assets/comp-nav.png" alt="Navigation component set" loading="lazy" />
+                </div>
+                <h4>Navigation</h4>
+                <p>Bottom navigation patterns and action button placement.</p>
+              </article>
+              <article class="component-card">
+                <div class="asset-frame"><img src="assets/comp-overview.png" alt="About SnapFlash card component set"
+                    loading="lazy" /></div>
+                <h4>About SnapFlash cards</h4>
+                <p>Status cards and deck list modules for the home flow.</p>
+              </article>
+              <article class="component-card component-card-wide">
+                <div class="asset-frame"><img src="assets/comp-cards.png" alt="Flashcard component set"
+                    loading="lazy" /></div>
+                <h4>Study cards</h4>
+                <p>Front and back flashcard views for review sessions.</p>
+              </article>
+              <article class="component-card component-card-wide">
+                <div class="asset-frame"><img src="assets/comp-editor.png" alt="Editor component set" loading="lazy" />
+                </div>
+                <h4>Word editor</h4>
+                <p>Editable fields for deck selection, type, and definition.</p>
+              </article>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Why it feels this way</span>
+            <h2>Designed to stay simple and focused</h2>
+          </div>
+          <p class="lead">The interface is shaped around a few simple decisions that make the product easier to
+            understand and use.</p>
+        </div>
+
+        <div class="decision-grid">
+          <article class="decision-card">
+            <h3>Reduce input friction</h3>
+            <p>The primary entry point prioritizes scanning so users can capture vocabulary directly from printed
+              materials instead of typing everything manually.</p>
+          </article>
+          <article class="decision-card">
+            <h3>Design for fast repetition</h3>
+            <p>Study screens are kept lightweight and focused to support quick review sessions without distraction.</p>
+          </article>
+          <article class="decision-card">
+            <h3>Keep users in control</h3>
+            <p>OCR results are never saved automatically. Users review, select, and edit words before they are added to
+              a deck, which improves trust and accuracy.</p>
+          </article>
+          <article class="decision-card">
+            <h3>Use a structured visual system</h3>
+            <p>A modular design system with clear hierarchy, spacing, and reusable components helps maintain consistency
+              across all screens and deliverables.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="links">
+      <div class="container">
+        <div class="cta">
+          <div class="section-head" style="margin-bottom: 22px;">
+            <div>
+              <span class="eyebrow" style="background: rgba(255,255,255,0.16); color:#fff;">Explore more</span>
+              <h2 style="color:#fff;">Project links</h2>
+            </div>
+            <p class="lead" style="color: rgba(255,255,255,0.82); max-width: 560px;">Explore the full design file,
+              interactive prototype, case study, and supporting project documentation.</p>
+          </div>
+
+          <div class="link-grid">
+            <article class="link-card">
+              <div class="icon-pill">🎨</div>
+              <h3>Figma design file</h3>
+              <p>See the complete UI screens, components, and visual system.</p>
+              <p style="margin-top:14px;"><a
+                  href="https://www.figma.com/design/1LfZ6g2gqVZyitBcFLqmNl/Untitled?node-id=0-1&p=f&t=iVfmJXmJGX3fDokN-0"
+                  target="_blank" rel="noopener noreferrer">Open Figma file</a></p>
+            </article>
+
+            <article class="link-card">
+              <div class="icon-pill">🧩</div>
+              <h3>Figma prototype</h3>
+              <p>Try the main interactions and follow the MVP flow.</p>
+              <p style="margin-top:14px;"><a
+                  href="https://www.figma.com/design/1LfZ6g2gqVZyitBcFLqmNl/Untitled?node-id=0-1&p=f&t=iVfmJXmJGX3fDokN-0"
+                  target="_blank" rel="noopener noreferrer">Open prototype</a></p>
+            </article>
+
+            <article class="link-card">
+              <div class="icon-pill">📘</div>
+              <h3>Behance case study</h3>
+              <p>Read the full case study with screens, decisions, and prototype highlights.</p>
+              <p style="margin-top:14px;"><a href="https://www.behance.net/your-project-link" target="_blank"
+                  rel="noopener noreferrer">Replace with your Behance URL</a></p>
+            </article>
+
+            <article class="link-card">
+              <div class="icon-pill">📝</div>
+              <h3>Project wiki</h3>
+              <p>Browse the project overview, research notes, and planning references.</p>
+              <p style="margin-top:14px;"><a href="https://github.com/OSgang/snapflash/wiki" target="_blank"
+                  rel="noopener noreferrer">Open project wiki</a></p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="container">
+    <footer>
+      © 2026 SnapFlash — UI/UX Design, Prototype, and Landing Page by OSGang
+    </footer>
+  </div>
+</body>
+
+</html>
