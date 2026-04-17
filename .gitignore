@@ -45,5 +45,7 @@ app-example
 # vs code
 .vscode/
 
-# codex
+# AI
 .codex
+.agents
+.claude
