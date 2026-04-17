@@ -1,0 +1,16 @@
+{
+  "name": "snapflash-backend",
+  "version": "1.0.0",
+  "description": "Submission-ready backend for SnapFlash with flashcards CRUD and OpenAPI docs.",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22.13 <23"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "node --test"
+  }
+}
