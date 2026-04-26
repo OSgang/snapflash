@@ -1,58 +1,125 @@
-# Welcome to SnapFlash 👋
+# SnapFlash
 
-This is a minimalist, AI-powered flashcard app designed to help you build your English-Vietnamese vocabulary decks instantly with just a snap. 
+[![Test](https://github.com/OSgang/snapflash/actions/workflows/test.yml/badge.svg)](https://github.com/OSgang/snapflash/actions/workflows/test.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=OSgang_snapflash&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=OSgang_snapflash)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=OSgang_snapflash&metric=coverage)](https://sonarcloud.io/summary/new_code?id=OSgang_snapflash)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=OSgang_snapflash&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=OSgang_snapflash)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=OSgang_snapflash&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=OSgang_snapflash)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=OSgang_snapflash&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=OSgang_snapflash)
 
-## Workflow of the Flashcard Creation Process
+SnapFlash is a React Native application built with Expo. The app helps learners create and review English-Vietnamese vocabulary flashcards from scanned text.
 
-1. **Capture:** The user takes a photo of any physical English text.
-2. **Extract:** The app uses OCR (Optical Character Recognition) to scan the image and extract the text into discrete words.
-3. **Cross-Reference:** The system checks the extracted words against an integrated English-Vietnamese dictionary to identify valid vocabulary.
-4. **Auto-Fill:** The app automatically fetches the translations and definitions from the dictionary to pre-populate the flashcards.
-5. **Review & Edit:** The user reviews the generated list, selects the specific words they want to learn, and can manually edit or update the flashcard details before saving them to their deck.
+## Tech Stack
 
-## Get started
+- React Native
+- Expo
+- Expo Router
+- TypeScript
+- Jest
+- React Native Testing Library
+- GitHub Actions
+- SonarCloud
 
-1. Install dependencies
+## Core Flow
 
-   ```bash
-   npm install
-   ```
+1. The user opens the app and goes through the onboarding screens.
+2. The app introduces instant flashcard creation, smart studying, and progress tracking.
+3. The user reaches the Home screen.
+4. The Home screen shows study overview data and recently accessed flashcard decks.
 
-2. Start the app
+## Getting Started
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Install dependencies:
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Start the Expo development server:
 
-## Learn more
+```bash
+npm start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+You can then open the app with Expo Go, Android emulator, iOS simulator, or the web target.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Run the web version:
 
-## Join the community
+```bash
+npm run web
+```
 
-Join our community of developers creating universal apps.
+## Testing Locally
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Run all tests:
+
+```bash
+npm test
+```
+
+Run tests with coverage:
+
+```bash
+npm run test:coverage
+```
+
+The local test report is generated at:
+
+```text
+test-report/index.html
+```
+
+The LCOV coverage report used by SonarCloud is generated at:
+
+```text
+coverage/lcov.info
+```
+
+## Tested Screens
+
+The project includes React Native component tests for:
+
+- `__tests__/OnboardingScreen.test.tsx`
+- `__tests__/HomeScreen.test.tsx`
+
+The test suite covers rendering, user interaction, navigation-related behavior, and basic crash safety for the required screens.
+
+## Continuous Integration
+
+GitHub Actions runs the test workflow on push and pull request events for the `main` branch.
+
+The workflow file is located at:
+
+```text
+.github/workflows/test.yml
+```
+
+The CI workflow:
+
+1. Checks out the repository.
+2. Installs dependencies with `npm ci`.
+3. Runs `npm run test:coverage`.
+4. Uploads the `test-report` artifact.
+5. Runs SonarCloud analysis using `coverage/lcov.info`.
+
+## SonarCloud
+
+SonarCloud is configured with:
+
+```text
+sonar-project.properties
+```
+
+The project tracks:
+
+- Coverage
+- Maintainability rating
+- Reliability rating
+- Security rating
+- Quality Gate status
+
+Current SonarCloud project:
+
+```text
+OSgang_snapflash
+```
