@@ -1,0 +1,10 @@
+# Copy this file to `application-local.properties` and replace the placeholder values.
+# Do not commit the real `application-local.properties` file.
+
+spring.datasource.url=jdbc:postgresql://YOUR_POOLED_HOST/snapflash_database?sslmode=require&channel_binding=require
+spring.datasource.username=YOUR_ROLE
+spring.datasource.password=YOUR_PASSWORD
+
+spring.flyway.url=jdbc:postgresql://YOUR_DIRECT_HOST/snapflash_database?sslmode=require
+spring.flyway.user=YOUR_ROLE
+spring.flyway.password=YOUR_PASSWORD

@@ -26,6 +26,10 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
+# test output
+coverage/
+test-report/
+
 # macOS
 .DS_Store
 *.pem
@@ -49,3 +53,6 @@ app-example
 .codex
 .agents
 .claude
+
+# IDEA
+.idea
