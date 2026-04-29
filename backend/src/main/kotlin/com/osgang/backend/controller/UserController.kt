@@ -22,8 +22,7 @@ class UserController (
         return when (val res = userService.userCreationRequest(request)) {
             is Response.Ok -> {
                 ResponseEntity
-                    .ok()
-                    .body("User created.")
+                    .ok("User created.")
             }
             is Response.Err -> ResponseEntity.status(res.error).body(res.customMsg)
         }

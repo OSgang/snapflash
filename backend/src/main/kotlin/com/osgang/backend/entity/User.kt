@@ -1,5 +1,6 @@
 package com.osgang.backend.entity
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
 import java.time.LocalDateTime
@@ -28,8 +29,10 @@ class User(
 
     // Bidirectional relationships (optional, but helpful for graph traversal)
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JsonIgnore
     var decks: MutableList<Deck> = mutableListOf()
 
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JsonIgnore
     var scanHistories: MutableList<ScanHistory> = mutableListOf()
 }
