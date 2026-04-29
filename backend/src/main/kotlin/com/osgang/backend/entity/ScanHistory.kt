@@ -1,5 +1,6 @@
 package com.osgang.backend.entity
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
 import java.time.LocalDateTime
@@ -10,6 +11,7 @@ import java.util.UUID
 class ScanHistory(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userid", nullable = false)
+    @JsonIgnore
     var user: User,
 
     @Column(name = "imageurl")

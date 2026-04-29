@@ -39,6 +39,18 @@ class UserService (
         }
     }
 
+    fun getUserById(id: UUID): User? {
+        try {
+            return userRepository.getReferenceById(id)
+        } catch (e: Exception) {
+            return null
+        }
+    }
+
+    fun saveUser(user: User): User {
+        return userRepository.save(user)
+    }
+
     fun checkById(id: UUID): Boolean {
         return userRepository.existsByUserId(id)
     }
