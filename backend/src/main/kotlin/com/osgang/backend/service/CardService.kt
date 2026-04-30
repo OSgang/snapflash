@@ -16,6 +16,10 @@ class CardService(
         return flashcardRepository.findByDeckDeckId(deckId)
     }
 
+    fun getDeck(deckId: UUID): Deck? {
+        return deckRepository.getReferenceById(deckId)
+    }
+
     fun findAllCardsByUserId(userId: UUID): List<Flashcard> {
 
         val decks = this.findAllDecksByUserId(userId)
