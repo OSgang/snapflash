@@ -10,10 +10,10 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
-import java.util.UUID
+import java.util.*
 
 @Service
-class UserService (
+class UserService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder = BCryptPasswordEncoder(),
 ) {
@@ -57,18 +57,18 @@ class UserService (
 
     fun userLoginRequest(request: UserLoginRequest): Response<User, HttpStatus> {
         try {
-            val user = userRepository.findByUsername(request.username);
-            user ?: return Response.Err(HttpStatus.NOT_FOUND, "Can't find user.");
+            val user = userRepository.findByUsername(request.username)
+            user ?: return Response.Err(HttpStatus.NOT_FOUND, "Can't find user.")
 
             if (!passwordEncoder.matches(request.password, user.passwordHash)) {
-                return Response.Err(HttpStatus.UNAUTHORIZED, "Wrong password.");
+                return Response.Err(HttpStatus.UNAUTHORIZED, "Wrong password.")
             }
 
             LOGGED_IN_USERS.add(requireNotNull(user.userId))
 
             return Response.Ok(user)
         } catch (e: Exception) {
-            return Response.Err(HttpStatus.INTERNAL_SERVER_ERROR, e.toString());
+            return Response.Err(HttpStatus.INTERNAL_SERVER_ERROR, e.toString())
         }
     }
 }

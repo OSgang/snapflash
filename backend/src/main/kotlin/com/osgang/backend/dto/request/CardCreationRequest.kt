@@ -1,6 +1,6 @@
 package com.osgang.backend.dto.request
 
-import java.util.UUID
+import java.util.*
 
 class CardCreationRequest(
     val deckId: UUID,

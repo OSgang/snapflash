@@ -5,7 +5,7 @@ import com.osgang.backend.entity.Flashcard
 import com.osgang.backend.repository.DeckRepository
 import com.osgang.backend.repository.FlashcardRepository
 import org.springframework.stereotype.Service
-import java.util.UUID
+import java.util.*
 
 @Service
 class CardService(

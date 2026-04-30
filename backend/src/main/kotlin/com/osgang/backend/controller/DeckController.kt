@@ -4,7 +4,6 @@ import com.osgang.backend.dto.request.DeckCreationRequest
 import com.osgang.backend.entity.Deck
 import com.osgang.backend.service.CardService
 import com.osgang.backend.service.UserService
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -20,7 +19,7 @@ class DeckController(
     fun requestDecksByUserId(@CookieValue("user_id") userId: UUID): ResponseEntity<List<Deck>> {
         return runCatching {
             ResponseEntity.ok(deckService.findAllDecksByUserId(userId))
-        } .getOrElse {
+        }.getOrElse {
             ResponseEntity.status(404).build()
         }
     }

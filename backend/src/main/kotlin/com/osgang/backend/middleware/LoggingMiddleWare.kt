@@ -1,15 +1,14 @@
 package com.osgang.backend.middleware
 
-import com.osgang.backend.controller.UserController
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
-import java.util.UUID
+import java.util.*
 
 // Im sorry god i dont know how to do real authentication yet
-public var LOGGED_IN_USERS: MutableSet<UUID> = mutableSetOf()
+var LOGGED_IN_USERS: MutableSet<UUID> = mutableSetOf()
 
 @Component
 class LoggingMiddleware : OncePerRequestFilter() {
@@ -24,7 +23,7 @@ class LoggingMiddleware : OncePerRequestFilter() {
         println("Request received: ${request.method} ${request.requestURI}")
 
         if (request.requestURI !in listOf("/user/register", "/user/login")) {
-            val id = request.cookies.find { it.name == "user_id" };
+            val id = request.cookies.find { it.name == "user_id" }
 
             val hasValidUUID =
                 try {
@@ -34,9 +33,9 @@ class LoggingMiddleware : OncePerRequestFilter() {
                 }
 
             if (!hasValidUUID) {
-                response.status = HttpServletResponse.SC_FORBIDDEN;
-                response.writer.write("Access Token invalid or missing.");
-                return;
+                response.status = HttpServletResponse.SC_FORBIDDEN
+                response.writer.write("Access Token invalid or missing.")
+                return
             }
         }
 
