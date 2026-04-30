@@ -1,5 +1,6 @@
 package com.osgang.backend.entity
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
@@ -11,6 +12,7 @@ import java.util.UUID
 class Flashcard(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "deckid", nullable = false)
+    @JsonIgnore
     var deck: Deck,
 
     @Column(name = "word", nullable = false)
