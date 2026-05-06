@@ -14,7 +14,7 @@ class CardController(
     private val userService: UserService,
     private val cardService: CardService,
 ) {
-    @PostMapping("new")
+    @PostMapping("/new")
     fun requestNewCard(
         @CookieValue("user_id") userId: UUID,
         @RequestBody cardReq: CardCreationRequest
