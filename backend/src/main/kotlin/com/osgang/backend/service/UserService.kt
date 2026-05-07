@@ -40,10 +40,10 @@ class UserService(
     }
 
     fun getUserById(id: UUID): User? {
-        try {
-            return userRepository.getReferenceById(id)
+        return try {
+            userRepository.getReferenceById(id)
         } catch (e: Exception) {
-            return null
+            null
         }
     }
 
