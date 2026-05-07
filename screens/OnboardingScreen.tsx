@@ -1,194 +1,227 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState, useRef, useEffect } from "react";
 import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type GestureResponderEvent,
-} from 'react-native';
+    View,
+    Text,
+    StyleSheet,
+    FlatList,
+    Dimensions,
+    TouchableOpacity,
+    Image,
+    useColorScheme,
+    Animated,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Colors, SIZES } from "@/constants/theme";
+import { useRouter } from "expo-router";
 
-type OnboardingSlide = {
-  title: string;
-  body: string;
-  icon: React.ComponentProps<typeof MaterialIcons>['name'];
-};
+const { width, height } = Dimensions.get("window");
 
-const slides: OnboardingSlide[] = [
-  {
-    title: 'Create Flashcards Instantly',
-    body: 'Just scan a word that you wish to learn, SnapFlash will automatically create a flashcard for you.',
-    icon: 'style',
-  },
-  {
-    title: 'Study Smart',
-    body: 'Optimize your learning with spaced repetition in SnapFlash.',
-    icon: 'menu-book',
-  },
-  {
-    title: 'Stay On Track',
-    body: 'See how many words you have learned every day with SnapFlash.',
-    icon: 'trending-up',
-  },
+const ONBOARDING_DATA = [
+    {
+        id: "1",
+        title: "Create Flashcards\nInstantly",
+        description:
+            "Just scan a word that you wish to learn, SnapFlash will automatically create a flashcard for you.",
+        image: require("../assets/images/onboardings/cards.png"),
+    },
+    {
+        id: "2",
+        title: "Study Smart",
+        description: "Optimize your learning with spaced repetition in SnapFlash.",
+        image: require("../assets/images/onboardings/research.png"),
+    },
+    {
+        id: "3",
+        title: "Stay On Track",
+        description: "See how many words you have learned every day with SnapFlash.",
+        image: require("../assets/images/onboardings/growth.png"),
+    },
 ];
 
 export default function OnboardingScreen() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const router = useRouter();
-  const slide = slides[activeIndex];
-  const isLastSlide = activeIndex === slides.length - 1;
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const flatListRef = useRef<FlatList>(null);
+    const router = useRouter();
 
-  function handleNext(event?: GestureResponderEvent) {
-    event?.preventDefault();
+    const colorScheme = useColorScheme();
+    const currentTheme = Colors[colorScheme ?? "light"];
 
-    if (isLastSlide) {
-      router.replace('/(tabs)');
-      return;
-    }
+    const [showSplash, setShowSplash] = useState(true);
+    const fadeAnim = useRef(new Animated.Value(1)).current;
 
-    setActiveIndex((current) => current + 1);
-  }
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            Animated.timing(fadeAnim, {
+                toValue: 0,
+                duration: 500,
+                useNativeDriver: true,
+            }).start(() => {
+                setShowSplash(false);
+            });
+        }, 1000);
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.screen}>
-        <View style={styles.heroPanel}>
-          <MaterialIcons name={slide.icon} size={118} color={colors.ink} />
+        return () => clearTimeout(timer);
+    }, [fadeAnim]);
+
+    const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
+    const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+        if (viewableItems[0]) {
+            setCurrentIndex(viewableItems[0].index);
+        }
+    }).current;
+
+    const handleDotPress = (index: number) => {
+        flatListRef.current?.scrollToIndex({ index, animated: true });
+    };
+
+    const handleNext = () => {
+        if (currentIndex < ONBOARDING_DATA.length - 1) {
+            flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
+        } else {
+            router.navigate("/login");
+        }
+    };
+
+    const renderItem = ({ item }: { item: (typeof ONBOARDING_DATA)[0] }) => {
+        return (
+            <View style={styles.screenContainer}>
+                <View style={styles.topCurveContainer}>
+                    <View style={styles.curveWrapper}>
+                        <LinearGradient
+                            colors={[currentTheme.lightButton, currentTheme.background]}
+                            style={styles.gradientCurve}
+                        />
+                    </View>
+
+                    <View style={styles.iconContainer}>
+                        <Image source={item.image} style={styles.slideImage} resizeMode="contain" />
+                    </View>
+                </View>
+
+                <View style={styles.bottomContent}>
+                    <Text style={[styles.slideTitle, { color: currentTheme.mainText }]}>{item.title}</Text>
+                    <Text style={[styles.slideDescription, { color: currentTheme.subText }]}>{item.description}</Text>
+                </View>
+            </View>
+        );
+    };
+
+    return (
+        <View style={[styles.container, { backgroundColor: currentTheme.white }]}>
+            {showSplash && (
+                <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim, zIndex: 10 }]}>
+                    <LinearGradient
+                        colors={[currentTheme.lightButton, currentTheme.background]}
+                        style={[styles.screenContainer, { justifyContent: "center", alignItems: "center" }]}
+                    >
+                        <Image
+                            source={require("../assets/images/logo.png")}
+                            style={styles.mainLogo}
+                            resizeMode="contain"
+                        />
+                        <Text style={[styles.welcomeTitle, { color: currentTheme.heading }]}>SnapFlash</Text>
+                    </LinearGradient>
+                </Animated.View>
+            )}
+
+            <FlatList
+                ref={flatListRef}
+                data={ONBOARDING_DATA}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                bounces={false}
+                snapToInterval={width}
+                snapToAlignment="center"
+                decelerationRate="fast"
+                onViewableItemsChanged={onViewableItemsChanged}
+                viewabilityConfig={viewabilityConfig}
+            />
+
+            <View style={styles.footer}>
+                <View style={styles.pagination}>
+                    {ONBOARDING_DATA.map((_, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            onPress={() => handleDotPress(index)}
+                            activeOpacity={0.7}
+                            style={{ padding: 5 }}
+                        >
+                            <View
+                                style={[
+                                    styles.dot,
+                                    currentIndex === index
+                                        ? [styles.activeDot, { backgroundColor: currentTheme.primary }]
+                                        : [styles.inactiveDot, { backgroundColor: currentTheme.border }],
+                                ]}
+                            />
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                <TouchableOpacity
+                    style={[styles.nextButton, { backgroundColor: currentTheme.lightButton }]}
+                    onPress={handleNext}
+                >
+                    <Text style={[styles.nextButtonText, { color: currentTheme.primary }]}>Next</Text>
+                </TouchableOpacity>
+            </View>
         </View>
-
-        <View style={styles.content}>
-          <Text style={styles.title}>{slide.title}</Text>
-          <Text style={styles.body}>{slide.body}</Text>
-        </View>
-
-        <View style={styles.footer}>
-          <View
-            accessibilityLabel={`Onboarding slide ${activeIndex + 1} of ${slides.length}`}
-            style={styles.dots}>
-            {slides.map((item, index) => (
-              <View
-                key={item.title}
-                style={[styles.dot, index === activeIndex ? styles.activeDot : undefined]}
-              />
-            ))}
-          </View>
-
-          <Pressable
-            accessibilityLabel={isLastSlide ? 'Get started' : 'Next onboarding slide'}
-            accessibilityRole="button"
-            onPress={handleNext}
-            style={({ pressed }) => [styles.nextButton, pressed ? styles.pressed : undefined]}>
-            <Text style={styles.nextButtonText}>{isLastSlide ? 'Get Started' : 'Next'}</Text>
-          </Pressable>
-        </View>
-      </View>
-    </SafeAreaView>
-  );
+    );
 }
 
-const colors = {
-  background: '#E4EBF7',
-  lightButton: '#92CEFF',
-  primary: '#4A30B9',
-  active: '#2863D2',
-  ink: '#111111',
-  border: '#1A0E4F',
-};
-
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-  },
-  screen: {
-    flex: 1,
-    width: '100%',
-    maxWidth: 412,
-    backgroundColor: colors.background,
-    overflow: 'hidden',
-  },
-  heroPanel: {
-    height: '56%',
-    marginHorizontal: -100,
-    marginTop: -26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderBottomLeftRadius: 320,
-    borderBottomRightRadius: 320,
-    backgroundColor: colors.lightButton,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    gap: 24,
-  },
-  title: {
-    color: colors.ink,
-    fontSize: 34,
-    lineHeight: 40,
-    fontWeight: '800',
-    letterSpacing: 0,
-  },
-  body: {
-    color: colors.ink,
-    fontSize: 19,
-    lineHeight: 27,
-    fontWeight: '500',
-    letterSpacing: 0,
-  },
-  footer: {
-    marginTop: 'auto',
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  dots: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 18,
-  },
-  dot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: colors.lightButton,
-  },
-  activeDot: {
-    width: 52,
-    backgroundColor: colors.active,
-  },
-  nextButton: {
-    minWidth: 136,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 28,
-    backgroundColor: colors.lightButton,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  nextButtonText: {
-    color: colors.primary,
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '700',
-    letterSpacing: 0,
-  },
-  pressed: {
-    opacity: 0.74,
-    transform: [{ scale: 0.98 }],
-  },
+    container: { flex: 1 },
+    screenContainer: { width, height },
+    mainLogo: { width: 250, height: 250, marginBottom: 20 },
+    welcomeTitle: { fontSize: SIZES.h1, fontWeight: "bold" },
+    topCurveContainer: {
+        height: height * 0.55,
+        backgroundColor: "transparent",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    curveWrapper: {
+        position: "absolute",
+        top: 0,
+        left: -width * 0.5,
+        right: -width * 0.5,
+        bottom: 0,
+        borderBottomLeftRadius: width,
+        borderBottomRightRadius: width,
+        overflow: "hidden",
+    },
+    gradientCurve: {
+        flex: 1,
+    },
+    iconContainer: {
+        zIndex: 2,
+        elevation: 2,
+        marginTop: 20,
+    },
+    slideImage: {
+        width: 140,
+        height: 140,
+    },
+
+    bottomContent: { flex: 1, paddingHorizontal: 30, paddingTop: 40 },
+    slideTitle: { fontSize: SIZES.h2, fontWeight: "bold", marginBottom: 15, lineHeight: 32 },
+    slideDescription: { fontSize: SIZES.body1, lineHeight: 24 },
+    footer: {
+        position: "absolute",
+        bottom: 50,
+        left: 30,
+        right: 30,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    pagination: { flexDirection: "row", alignItems: "center" },
+    dot: { height: 8, borderRadius: 4, marginHorizontal: 4 },
+    activeDot: { width: 24 },
+    inactiveDot: { width: 8 },
+    nextButton: { paddingVertical: 12, paddingHorizontal: 30, borderRadius: SIZES.radius || 25 },
+    nextButtonText: { fontSize: SIZES.body1, fontWeight: "bold" },
 });
