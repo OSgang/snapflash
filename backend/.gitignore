@@ -44,3 +44,4 @@ out/
 
 ### Local application secrets ###
 src/main/resources/application-local.properties
+src/main/resources/application.properties
