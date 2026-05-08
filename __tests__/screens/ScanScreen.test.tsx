@@ -7,11 +7,21 @@ jest.mock("expo-router", () => ({
 }));
 
 describe("ScanScreen", () => {
+    beforeEach(() => {
+        jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+        jest.clearAllTimers();
+        jest.useRealTimers();
+    });
+
     it("renders scanner and toggles language sheet", () => {
         render(<ScanScreen />);
 
         expect(screen.getByText("Scan your documents")).toBeTruthy();
 
+        // Tìm và bấm nút chọn ngôn ngữ
         const englishTexts = screen.getAllByText("English");
         fireEvent.press(englishTexts[0]);
 
