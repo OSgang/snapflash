@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, useColorScheme, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, Linking, Modal, TextInput } from "react-native";
 import { MaterialCommunityIcons, AntDesign, Feather, Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
 import { useRouter } from "expo-router";
@@ -12,7 +12,27 @@ export default function SettingsScreen() {
     const router = useRouter();
 
     const [isDarkMode, setIsDarkMode] = useState(false);
-    const [autoPlayAudio, setAutoPlayAudio] = useState(true);
+    
+    // States quản lý Daily Goal
+    const [dailyGoal, setDailyGoal] = useState("20");
+    const [isGoalModalVisible, setIsGoalModalVisible] = useState(false);
+    const [tempGoal, setTempGoal] = useState("");
+
+    const openWikiLink = () => {
+        Linking.openURL("https://github.com/OSgang/snapflash/wiki");
+    };
+
+    const handleOpenGoalModal = () => {
+        setTempGoal(dailyGoal);
+        setIsGoalModalVisible(true);
+    };
+
+    const handleSaveGoal = () => {
+        if (tempGoal.trim() !== "") {
+            setDailyGoal(tempGoal);
+        }
+        setIsGoalModalVisible(false);
+    };
 
     const SettingGroup = ({ title, children }: any) => (
         <View style={styles.groupContainer}>
@@ -33,12 +53,12 @@ export default function SettingsScreen() {
         onPress,
         showBorder = true,
         isExternal = false,
+        customOpacity = 0.4,
     }: any) => (
         <TouchableOpacity
             style={[styles.menuItem, showBorder && { borderBottomWidth: 1, borderBottomColor: currentTheme.border }]}
             onPress={onPress}
-            activeOpacity={onPress ? 0.6 : 1}
-            disabled={!onPress}
+            activeOpacity={customOpacity}
         >
             <View style={styles.menuLeft}>
                 <View style={[styles.iconWrapper, { backgroundColor: iconBgColor }]}>{icon}</View>
@@ -57,8 +77,10 @@ export default function SettingsScreen() {
         <MainLayout>
             <Text style={[styles.headerTitle, { color: currentTheme.mainText }]}>Settings</Text>
 
-            <View
+            <TouchableOpacity
                 style={[styles.profileCard, { backgroundColor: currentTheme.white, borderColor: currentTheme.border }]}
+                onPress={() => router.push("/settings/edit-profile")}
+                activeOpacity={0.4}
             >
                 <LinearGradient colors={["#2B78FF", "#5AB0FF"]} style={styles.avatar}>
                     <Text style={styles.avatarText}>K</Text>
@@ -67,31 +89,25 @@ export default function SettingsScreen() {
                     <Text style={[styles.profileName, { color: currentTheme.mainText }]}>Đậu Minh Khôi</Text>
                     <Text style={[styles.profileEmail, { color: currentTheme.subText }]}>khoidau@gmail.com</Text>
                 </View>
-                <TouchableOpacity style={styles.editProfileBtn}>
+                
+                <View style={styles.editProfileBtn}>
                     <Feather name="edit-3" size={18} color={currentTheme.primary} />
-                </TouchableOpacity>
-            </View>
+                </View>
+            </TouchableOpacity>
 
             <SettingGroup title="STUDY PREFERENCES">
                 <SettingItem
                     title="Daily Goal"
                     icon={<Ionicons name="flag-outline" size={20} color="#FF9800" />}
                     iconBgColor="#FFF3E0"
-                    rightComponent={<Text style={{ color: currentTheme.subText, fontWeight: "600" }}>20 words</Text>}
-                    onPress={() => {}}
+                    rightComponent={<Text style={{ color: currentTheme.subText, fontWeight: "600" }}>{dailyGoal} words</Text>}
+                    onPress={handleOpenGoalModal}
                 />
                 <SettingItem
                     title="Voice & Speech"
                     icon={<Feather name="mic" size={20} color="#E91E63" />}
                     iconBgColor="#FCE4EC"
-                    onPress={() => {}}
-                />
-                <SettingItem
-                    title="Auto-play Audio"
-                    icon={<Ionicons name="volume-medium-outline" size={20} color="#4CAF50" />}
-                    iconBgColor="#E8F5E9"
-                    rightComponent={<CustomSwitch value={autoPlayAudio} onValueChange={setAutoPlayAudio} />}
-                    showBorder={false}
+                    onPress={() => router.push("/settings/voice-speech")}
                 />
             </SettingGroup>
 
@@ -100,7 +116,13 @@ export default function SettingsScreen() {
                     title="Dark Mode"
                     icon={<Ionicons name="moon-outline" size={20} color="#5E5CE6" />}
                     iconBgColor="#F2F2F7"
-                    rightComponent={<CustomSwitch value={isDarkMode} onValueChange={setIsDarkMode} />}
+                    rightComponent={
+                        <View pointerEvents="none">
+                            <CustomSwitch value={isDarkMode} onValueChange={() => {}} />
+                        </View>
+                    }
+                    onPress={() => setIsDarkMode(!isDarkMode)}
+                    customOpacity={1}
                 />
                 <SettingItem
                     title="App Language"
@@ -113,13 +135,13 @@ export default function SettingsScreen() {
                     title="Notification Settings"
                     icon={<Feather name="bell" size={20} color="#FF2D55" />}
                     iconBgColor="#FFE5EB"
-                    onPress={() => {}}
+                    onPress={() => router.push("/settings/notifications")}
                 />
                 <SettingItem
                     title="Change Password"
                     icon={<Feather name="lock" size={20} color="#007AFF" />}
                     iconBgColor="#E5F1FF"
-                    onPress={() => {}}
+                    onPress={() => router.push("/settings/change-password")}
                     showBorder={false}
                 />
             </SettingGroup>
@@ -129,13 +151,13 @@ export default function SettingsScreen() {
                     title="Privacy Policy"
                     icon={<Feather name="shield" size={20} color="#673AB7" />}
                     iconBgColor="#F3E5F5"
-                    onPress={() => {}}
+                    onPress={openWikiLink}
                 />
                 <SettingItem
                     title="Terms of Service"
                     icon={<Feather name="file-text" size={20} color="#607D8B" />}
                     iconBgColor="#ECEFF1"
-                    onPress={() => {}}
+                    onPress={openWikiLink}
                     showBorder={false}
                 />
             </SettingGroup>
@@ -163,14 +185,14 @@ export default function SettingsScreen() {
                     icon={<Ionicons name="help-buoy-outline" size={20} color="#32ADE6" />}
                     iconBgColor="#E5F6FD"
                     isExternal={true}
-                    onPress={() => {}}
+                    onPress={openWikiLink}
                 />
                 <SettingItem
                     title="Rate SnapFlash"
                     icon={<AntDesign name="star" size={20} color="#FFCC00" />}
                     iconBgColor="#FFF9E5"
                     isExternal={true}
-                    onPress={() => {}}
+                    onPress={openWikiLink}
                     showBorder={false}
                 />
             </SettingGroup>
@@ -179,6 +201,7 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                     style={[styles.logoutBtn, { backgroundColor: "#FFE5EB" }]}
                     onPress={() => router.replace("/login")}
+                    activeOpacity={0.4}
                 >
                     <Feather name="log-out" size={20} color="#FF2D55" />
                     <Text style={styles.logoutText}>Log Out</Text>
@@ -190,6 +213,58 @@ export default function SettingsScreen() {
                     <Text style={styles.copyrightText}>All rights reserved.</Text>
                 </View>
             </View>
+
+            <Modal
+                visible={isGoalModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setIsGoalModalVisible(false)}
+            >
+                <View style={styles.alertOverlay}>
+                    <View style={[styles.alertBox, { backgroundColor: currentTheme.white }]}>
+                        {/* Icon Goal */}
+                        <View style={[styles.alertIconBg, { backgroundColor: "rgba(255, 152, 0, 0.1)" }]}>
+                            <Ionicons name="flag" size={32} color="#FF9800" />
+                        </View>
+                        
+                        <Text style={[styles.alertTitle, { color: currentTheme.mainText }]}>Set Daily Goal</Text>
+                        <Text style={[styles.alertMessage, { color: currentTheme.subText }]}>
+                            How many words do you want to learn per day?
+                        </Text>
+                        
+                        {/* Ô nhập số */}
+                        <TextInput
+                            style={[
+                                styles.goalInput, 
+                                { color: currentTheme.mainText, borderColor: currentTheme.border, backgroundColor: currentTheme.background }
+                            ]}
+                            value={tempGoal}
+                            onChangeText={setTempGoal}
+                            keyboardType="numeric"
+                            maxLength={3}
+                            textAlign="center"
+                            selectionColor={currentTheme.primary}
+                        />
+
+                        <View style={styles.alertBtnRow}>
+                            <TouchableOpacity 
+                                style={[styles.alertBtn, { backgroundColor: currentTheme.background }]} 
+                                onPress={() => setIsGoalModalVisible(false)}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={[styles.alertBtnText, { color: currentTheme.subText }]}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                style={[styles.alertBtn, { backgroundColor: currentTheme.primary }]} 
+                                onPress={handleSaveGoal}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={[styles.alertBtnText, { color: "#FFF" }]}>Save</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </MainLayout>
     );
 }
@@ -284,5 +359,70 @@ const styles = StyleSheet.create({
         fontSize: 11,
         color: "#999",
         fontWeight: "500",
+    },
+    
+    alertOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.4)",
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 20,
+    },
+    alertBox: {
+        width: "85%",
+        borderRadius: 24,
+        padding: 24,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
+        elevation: 10,
+    },
+    alertIconBg: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: 16,
+    },
+    alertTitle: {
+        fontSize: 20,
+        fontWeight: "bold",
+        marginBottom: 8,
+        textAlign: "center",
+    },
+    alertMessage: {
+        fontSize: 15,
+        textAlign: "center",
+        marginBottom: 24,
+        lineHeight: 22,
+    },
+    goalInput: {
+        width: "100%",
+        height: 56,
+        borderWidth: 1,
+        borderRadius: 14,
+        fontSize: 20,
+        fontWeight: "bold",
+        marginBottom: 24,
+    },
+    alertBtnRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        width: "100%",
+        gap: 12,
+    },
+    alertBtn: {
+        flex: 1,
+        height: 50,
+        borderRadius: 14,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    alertBtnText: {
+        fontSize: 16,
+        fontWeight: "bold",
     },
 });
