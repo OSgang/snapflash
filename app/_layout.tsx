@@ -22,6 +22,7 @@ export default function RootLayout() {
                 <Stack.Screen name="forgot-password" options={{ headerShown: false, animation: "slide_from_bottom" }} />
 
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="settings" options={{ headerShown: false, animation: "slide_from_right" }} />
 
                 <Stack.Screen name="deck" options={{ headerShown: false }} />
                 <Stack.Screen name="edit-card" options={{ headerShown: false }} />
