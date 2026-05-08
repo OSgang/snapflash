@@ -1,10 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-DROP DATABASE IF EXISTS snapflash_database;
-
-CREATE DATABASE IF NOT EXISTS snapflash_database;
-USE DATABASE snapflash_database
-
 CREATE TABLE IF NOT EXISTS Users (
     userId UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email TEXT NOT NULL UNIQUE,
