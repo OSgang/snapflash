@@ -1,0 +1,606 @@
+openapi: 3.0.3
+info:
+  title: SnapFlash API
+  version: 1.0.0
+  description: |
+    SnapFlash Backend API Documentation.
+
+    This API provides endpoints for:
+    - User authentication (register/login)
+    - Deck management
+    - Flashcard creation and management
+    - Text scanning with OCR and dictionary lookup
+
+    Authentication is handled via HTTP cookies (user_id).
+  contact:
+    name: OSgang
+    url: https://github.com/OSgang/snapflash
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://api.snapflash.app
+    description: Production server
+
+security:
+  - cookieAuth: []
+
+tags:
+  - name: User
+    description: User authentication and management
+  - name: Deck
+    description: Deck management operations
+  - name: Card
+    description: Flashcard operations
+  - name: Scan
+    description: OCR scanning and text processing
+
+paths:
+  /user/register:
+    post:
+      tags: [User]
+      summary: Register a new user
+      description: Creates a new user account with email, username, and password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreationRequest'
+            examples:
+              valid:
+                summary: Valid registration request
+                value:
+                  email: "user@example.com"
+                  username: "testuser"
+                  password: "securePassword123"
+      responses:
+        '200':
+          description: User successfully created
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "User created."
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email or username already exists
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Email already exists."
+
+  /user/login:
+    post:
+      tags: [User]
+      summary: Login user
+      description: Authenticates a user and sets the user_id cookie.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+            examples:
+              valid:
+                summary: Valid login request
+                value:
+                  username: "testuser"
+                  password: "securePassword123"
+      responses:
+        '200':
+          description: Login successful
+          headers:
+            Set-Cookie:
+              description: HTTP-only cookie containing the user_id
+              schema:
+                type: string
+                example: "user_id=550e8400-e29b-41d4-a716-446655440000; HttpOnly; Secure; SameSite=Strict"
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Hello testuser"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /user/greet:
+    get:
+      tags: [User]
+      summary: Greeting endpoint
+      description: A simple greeting endpoint (for testing).
+      responses:
+        '200':
+          description: Greeting message
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "おはようごさいます"
+
+  /deck/all:
+    get:
+      tags: [Deck]
+      summary: Get all decks for current user
+      description: Returns all flashcard decks belonging to the authenticated user.
+      parameters:
+        - name: user_id
+          in: cookie
+          required: true
+          description: UUID of the authenticated user
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of user's decks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Deck'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /deck/{deckId}:
+    get:
+      tags: [Deck]
+      summary: Get a specific deck
+      description: Returns a single deck by its ID.
+      parameters:
+        - name: deckId
+          in: path
+          required: true
+          description: UUID of the deck to retrieve
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Deck found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deck'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /deck/new:
+    post:
+      tags: [Deck]
+      summary: Create a new deck
+      description: Creates a new flashcard deck for the authenticated user.
+      parameters:
+        - name: user_id
+          in: cookie
+          required: true
+          description: UUID of the authenticated user
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeckCreationRequest'
+            examples:
+              valid:
+                summary: Valid deck creation request
+                value:
+                  deckName: "English Vocabulary"
+                  description: "Basic English words for daily conversation"
+      responses:
+        '200':
+          description: Deck successfully created
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "550e8400-e29b-41d4-a716-446655440000"
+        '404':
+          description: Invalid user ID
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Invalid UUID or user does not exist"
+
+  /card/new:
+    post:
+      tags: [Card]
+      summary: Create a new flashcard
+      description: Creates a new flashcard in the specified deck.
+      parameters:
+        - name: user_id
+          in: cookie
+          required: true
+          description: UUID of the authenticated user
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CardCreationRequest'
+            examples:
+              valid:
+                summary: Valid card creation request
+                value:
+                  deckId: "550e8400-e29b-41d4-a716-446655440000"
+                  word: "hello"
+                  translation: "xin chào"
+                  definition: "A greeting used when meeting someone"
+      responses:
+        '200':
+          description: Card successfully created
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "660e8400-e29b-41d4-a716-446655440000"
+        '400':
+          description: Invalid deck ID
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Invalid UUID for deck doesn't exist."
+
+  /scan/all:
+    get:
+      tags: [Scan]
+      summary: Get all scan history
+      description: Returns all scan history records for the authenticated user.
+      parameters:
+        - name: user_id
+          in: cookie
+          required: true
+          description: UUID of the authenticated user
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of scan history records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScanHistory'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /scan/{id}:
+    get:
+      tags: [Scan]
+      summary: Get scan history by ID
+      description: Returns a specific scan history record by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID of the scan history to retrieve
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Scan history found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanHistory'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /scan:
+    post:
+      tags: [Scan]
+      summary: Scan image and generate flashcard candidates
+      description: |
+        Uploads an image for OCR processing. The backend performs OCR using Tesseract4J,
+        extracts English words, looks them up in the bundled English-Vietnamese dictionary,
+        and returns flashcard candidates for user review.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Image file to scan (JPEG/PNG)
+              required: [image]
+      responses:
+        '200':
+          description: OCR and dictionary lookup successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScanResponse'
+              examples:
+                success:
+                  summary: Successful scan with word candidates
+                  value:
+                    data:
+                      scanId: "770e8400-e29b-41d4-a716-446655440000"
+                      words:
+                        - word: "hello"
+                          translation: "xin chào"
+                          definition: "A greeting used when meeting someone"
+                        - word: "world"
+                          translation: "thế giới"
+                          definition: "The earth and all the people on it"
+                    error: null
+                    status: 200
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: user_id
+      description: HTTP-only cookie containing the user's UUID
+
+  schemas:
+    UserCreationRequest:
+      type: object
+      required: [email, username, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        username:
+          type: string
+          example: "testuser"
+        password:
+          type: string
+          format: password
+          example: "securePassword123"
+      description: Request body for user registration
+
+    UserLoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: "testuser"
+        password:
+          type: string
+          format: password
+          example: "securePassword123"
+      description: Request body for user login
+
+    DeckCreationRequest:
+      type: object
+      required: [deckName]
+      properties:
+        deckName:
+          type: string
+          example: "English Vocabulary"
+        description:
+          type: string
+          nullable: true
+          example: "Basic English words for daily conversation"
+      description: Request body for creating a new deck
+
+    CardCreationRequest:
+      type: object
+      required: [deckId, word, translation, definition]
+      properties:
+        deckId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        word:
+          type: string
+          example: "hello"
+        translation:
+          type: string
+          example: "xin chào"
+        definition:
+          type: string
+          example: "A greeting used when meeting someone"
+      description: Request body for creating a new flashcard
+
+    User:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "440e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        username:
+          type: string
+          example: "testuser"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-05-08T10:30:00.00Z"
+      description: User entity (password hash is never exposed in API responses)
+
+    Deck:
+      type: object
+      properties:
+        deckId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        deckName:
+          type: string
+          example: "English Vocabulary"
+        description:
+          type: string
+          nullable: true
+          example: "Basic English words for daily conversation"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-05-08T10:30:00.00Z"
+        lastUpdate:
+          type: string
+          format: date-time
+          example: "2026-05-08T12:45:00.00Z"
+        flashcards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Flashcard'
+          description: Nested flashcards (only included when relationship is loaded)
+      description: Deck entity representing a collection of flashcards
+
+    Flashcard:
+      type: object
+      properties:
+        flashcardId:
+          type: string
+          format: uuid
+          example: "660e8400-e29b-41d4-a716-446655440000"
+        word:
+          type: string
+          example: "hello"
+        translation:
+          type: string
+          example: "xin chào"
+        definition:
+          type: string
+          example: "A greeting used when meeting someone"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-05-08T10:30:00.00Z"
+        lastUpdate:
+          type: string
+          format: date-time
+          example: "2026-05-08T12:45:00.00Z"
+      description: Flashcard entity representing a single vocabulary card
+
+    ScanHistory:
+      type: object
+      properties:
+        historyId:
+          type: string
+          format: uuid
+          example: "770e8400-e29b-41d4-a716-446655440000"
+        imageUrl:
+          type: string
+          nullable: true
+          example: "https://storage.snapflash.app/scans/image123.jpg"
+        extractedText:
+          type: string
+          nullable: true
+          example: "Hello world, this is a test."
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-05-08T10:30:00.00Z"
+      description: Scan history entity recording OCR scan attempts
+
+    FlashcardCandidateDto:
+      type: object
+      properties:
+        word:
+          type: string
+          example: "hello"
+        translation:
+          type: string
+          example: "xin chào"
+        definition:
+          type: string
+          example: "A greeting used when meeting someone"
+      description: Flashcard candidate generated from OCR scan result
+
+    ScanResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            scanId:
+              type: string
+              format: uuid
+              example: "770e8400-e29b-41d4-a716-446655440000"
+            words:
+              type: array
+              items:
+                $ref: '#/components/schemas/FlashcardCandidateDto'
+        error:
+          type: string
+          nullable: true
+          example: null
+        status:
+          type: integer
+          example: 200
+      description: Response wrapper for scan endpoint
+
+    ErrorResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          nullable: true
+          example: null
+        error:
+          type: string
+          example: "Invalid request"
+        status:
+          type: integer
+          example: 400
+      description: Error response wrapper
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: "Invalid input"
+
+    Unauthorized:
+      description: Unauthorized - invalid credentials
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: "Invalid username or password"
+
+    NotFound:
+      description: Resource not found
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: "Resource not found"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            data: null
+            error: "An unexpected error occurred"
+            status: 500
