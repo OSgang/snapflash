@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react-native";
-import { FlatList } from "react-native"; // 👈 THÊM DÒNG NÀY: Import FlatList
+import { FlatList } from "react-native";
 import OnboardingScreen from "@/screens/OnboardingScreen";
 
 const mockNavigate = jest.fn();
