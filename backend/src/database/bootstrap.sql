@@ -19,15 +19,15 @@ CREATE TABLE IF NOT EXISTS Decks(
     FOREIGN KEY (userId) REFERENCES Users(userId) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS ScanHistory(
-    historyId UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    userId UUID,
-    imageURL TEXT,
-    extractedText TEXT,
-    createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (userId) REFERENCES Users(userId) ON DELETE CASCADE
+-- CREATE TABLE IF NOT EXISTS ScanHistory(
+--     historyId UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+--     userId UUID,
+--     imageURL TEXT,
+--     extractedText TEXT,
+--     createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     FOREIGN KEY (userId) REFERENCES Users(userId) ON DELETE CASCADE
 
-);
+-- );
 
 CREATE TABLE IF NOT EXISTS FlashCards(
     flashcardId UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -107,3 +107,4 @@ DROP TABLE IF EXISTS FlashCards;
 DROP TABLE IF EXISTS ScanHistory;
 DROP TABLE IF EXISTS Decks;
 DROP TABLE IF EXISTS Users;
+
