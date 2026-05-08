@@ -31,7 +31,7 @@ class DeckController(
         })
     }
 
-    @PostMapping("new")
+    @PostMapping("/new")
     fun requestNewDeck(
         @CookieValue("user_id") userId: UUID,
         @RequestBody deckReq: DeckCreationRequest

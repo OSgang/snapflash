@@ -24,6 +24,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-flyway")
 //	implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("net.sourceforge.tess4j:tess4j:5.11.0")
 	implementation("org.springframework.security:spring-security-crypto")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")

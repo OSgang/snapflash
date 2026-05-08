@@ -31,8 +31,4 @@ class User(
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
     @JsonIgnore
     var decks: MutableList<Deck> = mutableListOf()
-
-    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
-    @JsonIgnore
-    var scanHistories: MutableList<ScanHistory> = mutableListOf()
 }
