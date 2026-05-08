@@ -15,7 +15,7 @@ import java.util.*
 class UserController(
     private val userService: UserService
 ) {
-    @PostMapping("register")
+    @PostMapping("/register")
     fun registerUser(@RequestBody request: UserCreationRequest): ResponseEntity<String> {
         return when (val res = userService.userCreationRequest(request)) {
             is Response.Ok -> {
