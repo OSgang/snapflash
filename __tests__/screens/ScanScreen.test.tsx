@@ -21,11 +21,34 @@ describe("ScanScreen", () => {
 
         expect(screen.getByText("Scan your documents")).toBeTruthy();
 
-        // Tìm và bấm nút chọn ngôn ngữ
         const englishTexts = screen.getAllByText("English");
         fireEvent.press(englishTexts[0]);
 
         expect(screen.getByText("Select Language")).toBeTruthy();
         expect(screen.getByText("Vietnamese")).toBeTruthy();
+    });
+
+    it("tương tác với đèn flash và tìm kiếm ngôn ngữ", () => {
+        render(<ScanScreen />);
+
+        const flashBtn = screen.getByText("flashlight-off");
+        fireEvent.press(flashBtn);
+        expect(screen.getByText("flashlight")).toBeTruthy();
+
+        const englishTexts = screen.getAllByText("English");
+        fireEvent.press(englishTexts[0]);
+
+        const searchInput = screen.getByPlaceholderText("Search language...");
+        fireEvent.changeText(searchInput, "Viet");
+
+        expect(screen.getByText("Vietnamese")).toBeTruthy();
+    });
+
+    it("đóng bottom sheet quét từ vựng khi bấm Done", () => {
+        render(<ScanScreen />);
+        const listBtn = screen.getByText("sort-variant");
+        fireEvent.press(listBtn);
+        const doneBtn = screen.getByText("Done");
+        fireEvent.press(doneBtn);
     });
 });

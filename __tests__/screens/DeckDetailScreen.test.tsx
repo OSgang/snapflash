@@ -22,4 +22,11 @@ describe("DeckDetailScreen", () => {
             params: { cardId: "1", word: "Capitalism" },
         });
     });
+
+    it("đóng thẻ từ vựng khi bấm thêm lần nữa", () => {
+        render(<DeckDetailScreen />);
+        expect(screen.getByText("Type")).toBeTruthy();
+        fireEvent.press(screen.getByText("Capitalism"));
+        expect(screen.queryByText("Type")).toBeNull();
+    });
 });
