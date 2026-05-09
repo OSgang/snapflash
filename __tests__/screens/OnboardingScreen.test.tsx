@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen, act } from "@testing-library/react-native";
 import { FlatList } from "react-native";
 import OnboardingScreen from "@/screens/OnboardingScreen";
 
@@ -36,5 +36,14 @@ describe("OnboardingScreen", () => {
         fireEvent.press(nextBtn);
 
         expect(nextBtn).toBeTruthy();
+    });
+
+    it("tự động ẩn Splash Screen sau khi hết timeout", () => {
+        jest.useFakeTimers();
+        render(<OnboardingScreen />);
+        expect(screen.getByText("SnapFlash")).toBeTruthy();
+        act(() => { jest.advanceTimersByTime(1500); });
+        expect(screen.getByText("Next")).toBeTruthy();
+        jest.useRealTimers();
     });
 });

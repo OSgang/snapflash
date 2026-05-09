@@ -12,6 +12,7 @@ describe("StudyScreen", () => {
     });
 
     afterEach(() => {
+        jest.clearAllTimers();
         jest.useRealTimers();
     });
 
@@ -21,26 +22,27 @@ describe("StudyScreen", () => {
 
         const correctBtn = screen.getByText("check");
 
-        fireEvent.press(correctBtn);
-        act(() => {
-            jest.advanceTimersByTime(300);
-        });
-
-        fireEvent.press(correctBtn);
-        act(() => {
-            jest.advanceTimersByTime(300);
-        });
-
-        fireEvent.press(correctBtn);
-        act(() => {
-            jest.advanceTimersByTime(300);
-        });
-
-        fireEvent.press(correctBtn);
-        act(() => {
-            jest.advanceTimersByTime(300);
-        });
+        for (let i = 0; i < 4; i++) {
+            fireEvent.press(correctBtn);
+            act(() => {
+                jest.advanceTimersByTime(300);
+            });
+        }
 
         expect(screen.getByText("Awesome!")).toBeTruthy();
+    });
+
+    it("cho phép học lại từ đầu khi hoàn thành", () => {
+        render(<StudyScreen />);
+        const correctBtn = screen.getByText("check");
+
+        for (let i = 0; i < 4; i++) {
+            fireEvent.press(correctBtn);
+            act(() => { jest.advanceTimersByTime(300); });
+        }
+        
+        const resetBtn = screen.getByText("Học lại từ đầu");
+        fireEvent.press(resetBtn);
+        expect(screen.getByText("Capitalism")).toBeTruthy();
     });
 });
