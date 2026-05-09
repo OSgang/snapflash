@@ -87,24 +87,24 @@ VALUES
 
 
 
-SELECT * FROM Users;
-SELECT * FROM Decks;
-SELECT * FROM FlashCards;
---SELECT * FROM ScanHistory;
+-- SELECT * FROM Users;
+-- SELECT * FROM Decks;
+-- SELECT * FROM FlashCards;
+-- --SELECT * FROM ScanHistory;
 
-SELECT f.word 
-FROM FlashCards f
-JOIN Decks d ON d.deckID = f.deckId
-JOIN Users u ON u.userId = d.userId
-WHERE u.userName = 'Bob';
+-- SELECT f.word 
+-- FROM FlashCards f
+-- JOIN Decks d ON d.deckID = f.deckId
+-- JOIN Users u ON u.userId = d.userId
+-- WHERE u.userName = 'Bob';
 
-SELECT f.word
-FROM FlashCards f
-JOIN Decks d ON f.deckId = d.deckId
-JOIN Users u ON d.userId = u.userId
-WHERE u.userName = 'Alice';
-DROP TABLE IF EXISTS FlashCards;
-DROP TABLE IF EXISTS ScanHistory;
-DROP TABLE IF EXISTS Decks;
-DROP TABLE IF EXISTS Users;
+-- SELECT f.word
+-- FROM FlashCards f
+-- JOIN Decks d ON f.deckId = d.deckId
+-- JOIN Users u ON d.userId = u.userId
+-- WHERE u.userName = 'Alice';
+-- DROP TABLE IF EXISTS FlashCards;
+-- DROP TABLE IF EXISTS ScanHistory;
+-- DROP TABLE IF EXISTS Decks;
+-- DROP TABLE IF EXISTS Users;
 
