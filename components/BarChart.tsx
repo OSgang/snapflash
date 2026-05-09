@@ -54,7 +54,7 @@ export default function BarChart({ title, data, goalValue, expectedLabels }: any
 
             const predictions = missingLabels.map((label: string) => ({
                 day: label,
-                words: Math.round(avg * (0.9 + Math.random() * 0.2)),
+                words: Math.round(avg * (0.9 + (Date.now() % 4) * 0.2)),
                 isPrediction: true,
                 active: false,
             }));

@@ -147,7 +147,7 @@ export default function ScanScreen() {
                 });
                 if (photo?.base64) {
                     await new Promise((resolve) => setTimeout(resolve, 600));
-                    const fakeResult = ["Logic", "Component", "State", "Effect"][Math.floor(Math.random() * 4)];
+                    const fakeResult = ["Logic", "Component", "State", "Effect"][Math.floor((Date.now() % 4) * 4)];
                     setScannedWords((prev) => [{ id: Date.now().toString(), text: fakeResult, level: "B1" }, ...prev]);
                     showToast(fakeResult);
                 }
