@@ -77,7 +77,7 @@ spring.datasource.username=alex
 spring.datasource.password=abc123
 ```
 
-For Flyway, use the **direct** Neon host instead of the `-pooler` host:
+For Flyway, You need to remove `-pooler` to use the **direct** Neon host instead of the `-pooler` host:
 
 ```text
 postgresql://alex:abc123@ep-cool-darkness-a1b2c3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
