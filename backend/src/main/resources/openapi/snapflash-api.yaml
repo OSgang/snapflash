@@ -255,62 +255,12 @@ paths:
                 type: string
                 example: "Invalid UUID for deck doesn't exist."
 
-  /scan/all:
-    get:
-      tags: [Scan]
-      summary: Get all scan history
-      description: Returns all scan history records for the authenticated user.
-      parameters:
-        - name: user_id
-          in: cookie
-          required: true
-          description: UUID of the authenticated user
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: List of scan history records
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ScanHistory'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /scan/{id}:
-    get:
-      tags: [Scan]
-      summary: Get scan history by ID
-      description: Returns a specific scan history record by its ID.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: UUID of the scan history to retrieve
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Scan history found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ScanHistory'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
   /scan:
     post:
       tags: [Scan]
       summary: Scan image and generate flashcard candidates
       description: |
-        Uploads an image for OCR processing. The backend performs OCR using Tesseract4J,
-        extracts English words, looks them up in the bundled English-Vietnamese dictionary,
-        and returns flashcard candidates for user review.
+        Uploads an image for OCR processing. The backend performs OCR using Tesseract4J, extracts English words, looks them up in the bundled  English-Vietnamese dictionary, and returns flashcard candidates for user review.
       requestBody:
         required: true
         content:
@@ -495,27 +445,6 @@ components:
           format: date-time
           example: "2026-05-08T12:45:00.00Z"
       description: Flashcard entity representing a single vocabulary card
-
-    ScanHistory:
-      type: object
-      properties:
-        historyId:
-          type: string
-          format: uuid
-          example: "770e8400-e29b-41d4-a716-446655440000"
-        imageUrl:
-          type: string
-          nullable: true
-          example: "https://storage.snapflash.app/scans/image123.jpg"
-        extractedText:
-          type: string
-          nullable: true
-          example: "Hello world, this is a test."
-        createdAt:
-          type: string
-          format: date-time
-          example: "2026-05-08T10:30:00.00Z"
-      description: Scan history entity recording OCR scan attempts
 
     FlashcardCandidateDto:
       type: object
