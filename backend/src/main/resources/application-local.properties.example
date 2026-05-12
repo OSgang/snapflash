@@ -8,3 +8,13 @@ spring.datasource.password=YOUR_PASSWORD
 spring.flyway.url=jdbc:postgresql://YOUR_DIRECT_HOST/snapflash_database?sslmode=require
 spring.flyway.user=YOUR_ROLE
 spring.flyway.password=YOUR_PASSWORD
+
+# Tesseract — set this to YOUR local tessdata path
+# macOS (Homebrew):   /opt/homebrew/share/tessdata
+# Ubuntu:             /usr/share/tesseract-ocr/5/tessdata
+# Windows:            C:/Program Files/Tesseract-OCR/tessdata
+tesseract.datapath=/your/local/tessdata/path
+
+# Increase the maximum capacity of file sending
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB

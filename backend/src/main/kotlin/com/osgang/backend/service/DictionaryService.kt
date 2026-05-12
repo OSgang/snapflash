@@ -34,22 +34,22 @@ class DictionaryService (
                         //                        -> create new currentWord
                         if (line.startsWith('@')) {  // if there's a new word, add the previous word to the dictionary and save the new word to currentWord
                             if (currentWord.isNotEmpty()) {
-                                dictionary[currentWord] = currentDefinitions.toList();
-                                currentDefinitions.clear();
+                                dictionary[currentWord] = currentDefinitions.toList()
+                                currentDefinitions.clear()
                             }
 
                             // Add new word
-                            currentWord = line.substringAfter('@').substringBefore(' ');
+                            currentWord = line.substringAfter('@').substringBefore(' ').lowercase()
 
                         } else {  // if line starts with '-' -> definition
-                            currentDefinitions.add(line.substringAfter('-'))
+                            currentDefinitions.add(line.substringAfter('-').lowercase())
                         }
                 }
             }
 
             // Add the last word because the algo above won't save it when it reaches the EOF
             if (currentWord.isNotEmpty()) {
-                dictionary[currentWord] = currentDefinitions.toList();
+                dictionary[currentWord] = currentDefinitions.toList()
             }
 
             println("\uD83D\uDCD6 Dictionary loaded with ${dictionary.size} words")
@@ -60,6 +60,6 @@ class DictionaryService (
     }
 
     fun lookup(word: String): List<String> {
-        return dictionary[word].orEmpty();
+        return dictionary[word.lowercase()].orEmpty();
     }
 }
