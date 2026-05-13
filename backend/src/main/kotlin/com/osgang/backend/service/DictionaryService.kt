@@ -26,6 +26,7 @@ class DictionaryService (
                 lines
                     .filter { it.isNotBlank() }
                     .filterNot { it.startsWith('*') }  // skip the word class
+                    .filterNot { it.startsWith('+') }  // skip the Vietnamese example
                     .filterNot { it.startsWith('=') }  // skip the usage example
                     .filterNot { it.startsWith("@00") }  // skip the dictionary's metadata
                     .forEach { line ->
@@ -39,7 +40,7 @@ class DictionaryService (
                             }
 
                             // Add new word
-                            currentWord = line.substringAfter('@').substringBefore(' ').lowercase()
+                            currentWord = line.substringAfter('@').substringBefore("/").lowercase().trim()
 
                         } else {  // if line starts with '-' -> definition
                             currentDefinitions.add(line.substringAfter('-').lowercase())
