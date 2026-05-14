@@ -9,17 +9,12 @@ class AppException(
     val errorCode: ErrorCode
 ) : RuntimeException(errorCode.message)
 
-
 @ControllerAdvice
 class GlobalExceptionHandler {
     
     @ExceptionHandler(AppException::class)
     fun handleAppException(exception: AppException): ResponseEntity<String> {
-        return ResponseEntity
-            .badRequest()
-            .body(
-                exception.message
-            )
+        return ResponseEntity.status(exception.errorCode.code).body(exception.errorCode.message)
     }
     // ResponseEntity<String> handlingRuntimeException(AppException exception){
     //     return ResponseEntity.badRequest().body(exception.message);

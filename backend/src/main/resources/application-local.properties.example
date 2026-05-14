@@ -1,13 +1,13 @@
 # Copy this file to `application-local.properties` and replace the placeholder values.
 # Do not commit the real `application-local.properties` file.
 
-spring.datasource.url=jdbc:postgresql://YOUR_POOLED_HOST/snapflash_database?sslmode=require&channel_binding=require
-spring.datasource.username=YOUR_ROLE
-spring.datasource.password=YOUR_PASSWORD
+spring.datasource.url=jdbc:postgresql://ep-restless-sunset-a1bciox8-pooler.ap-southeast-1.aws.neon.tech/snapflash_database?sslmode=require&channel_binding=require
+spring.datasource.username=neondb_owner
+spring.datasource.password=npg_hj85NrXOPagp
 
-spring.flyway.url=jdbc:postgresql://YOUR_DIRECT_HOST/snapflash_database?sslmode=require
-spring.flyway.user=YOUR_ROLE
-spring.flyway.password=YOUR_PASSWORD
+spring.flyway.url=jdbc:postgresql://ep-restless-sunset-a1bciox8.ap-southeast-1.aws.neon.tech/snapflash_database?sslmode=require
+spring.flyway.user=neondb_owner
+spring.flyway.password=npg_hj85NrXOPagp
 
 # Tesseract — set this to YOUR local tessdata path
 # macOS (Homebrew):   /opt/homebrew/share/tessdata

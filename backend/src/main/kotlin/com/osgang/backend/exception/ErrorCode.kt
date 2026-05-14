@@ -12,23 +12,11 @@ enum class ErrorCode(
     val code : Int,
     val message : String
 ) {
-    USER__USER_NOT_FOUND(1001, "User not found"),
-    USER__EMAIL_EXISTED(1002, "A user with this email already exists"),
-    USER__WRONG_PASSWORD(1003, "Wrong password"),
-    DECK__DECK_NOT_FOUND(2001, "Deck not found"),
-    CARD__CARD_NOT_FOUND(3001, "Card not found");
-
-
-
-
-
-    // fun getCode(): Int{
-    //     return code;
-    // }
-
-    // fun getMessage(): String{
-    //     return message;
-    // }
+    USER__USER_NOT_FOUND(404, "User not found"),
+    USER__EMAIL_EXISTED(409, "A user with this email already exists"),
+    USER__WRONG_PASSWORD(400, "Wrong password"),
+    DECK__DECK_NOT_FOUND(404, "Deck not found"),
+    CARD__CARD_NOT_FOUND(404, "Card not found");
 }
 
 
