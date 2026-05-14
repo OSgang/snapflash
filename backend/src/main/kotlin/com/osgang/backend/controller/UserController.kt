@@ -2,7 +2,7 @@ package com.osgang.backend.controller
 
 import com.osgang.backend.dto.request.UserCreationRequest
 import com.osgang.backend.dto.request.UserLoginRequest
-import com.osgang.backend.dto.response.Response
+import com.osgang.backend.dto.response.ApiResponse
 import com.osgang.backend.service.UserService
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseCookie
@@ -17,34 +17,41 @@ class UserController(
 ) {
     @PostMapping("/register")
     fun registerUser(@RequestBody request: UserCreationRequest): ResponseEntity<String> {
-        return when (val res = userService.userCreationRequest(request)) {
-            is Response.Ok -> {
-                ResponseEntity
-                    .ok("User created.")
-            }
+        // return when (val res = userService.userCreationRequest(request)) {
+        //     // is Response.Ok -> {
+        //     //     ResponseEntity
+        //     //         .ok("User created.")
+        //     // }
 
-            is Response.Err -> ResponseEntity.status(res.error).body(res.customMsg)
-        }
+        //     is ApiResponse
+
+        //     is Response.Err -> ResponseEntity.status(res.error).body(res.customMsg)
+        // }
+        return ResponseEntity.ok(userService.userCreationRequest(request).message);
     }
 
     @PostMapping("/login")
     fun loginUser(@RequestBody request: UserLoginRequest): ResponseEntity<String> {
-        return when (val res = userService.userLoginRequest(request)) {
-            is Response.Ok -> {
 
-                val cookie = ResponseCookie.from("user_id", requireNotNull(res.value.userId).toString())
-                    .httpOnly(true)
-                    .secure(true)
-                    .path("/")
-                    .sameSite("Strict") // Protect against CSRF
-                    .build()
+        return ResponseEntity.ok(userService.userLoginRequest(request).message);
 
-                ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
-                    .body("Hello ${res.value.username}")
-            }
 
-            is Response.Err -> ResponseEntity.status(res.error).body(res.customMsg)
-        }
+        // return when (val res = userService.userLoginRequest(request)) {
+        //     is Response.Ok -> {
+
+        //         val cookie = ResponseCookie.from("user_id", requireNotNull(res.value.userId).toString())
+        //             .httpOnly(true)
+        //             .secure(true)
+        //             .path("/")
+        //             .sameSite("Strict") // Protect against CSRF
+        //             .build()
+
+        //         ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
+        //             .body("Hello ${res.value.username}")
+        //     }
+
+        //     is Response.Err -> ResponseEntity.status(res.error).body(res.customMsg)
+        // }
     }
 
     fun checkId(uuidStr: String): Boolean {

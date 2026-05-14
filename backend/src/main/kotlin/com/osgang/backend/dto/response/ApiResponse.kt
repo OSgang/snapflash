@@ -1,7 +1,8 @@
-
+package com.osgang.backend.dto.response
 
 data class ApiResponse<T>(
-    val code: ErrorCode,
-    val message: String,
+    val code: Int = 1000,
+    val message: String = "Success",
     val result: T
 )
+

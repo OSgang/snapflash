@@ -1,5 +1,6 @@
 package com.osgang.backend.service
 
+
 import com.osgang.backend.dto.request.UserCreationRequest
 import com.osgang.backend.dto.request.UserLoginRequest
 import com.osgang.backend.dto.response.Response
@@ -17,7 +18,8 @@ class UserService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder = BCryptPasswordEncoder(),
 ) {
-    fun userCreationRequest(request: UserCreationRequest): Response<User, HttpStatus> {
+    // fun userCreationRequest(request: UserCreationRequest): Response<User, HttpStatus> {
+    fun userCreationRequest(request: UserCreationRequest): ApiResponse<User> {
         val user: User = User(
             email = request.email,
             username = request.username,
@@ -25,25 +27,31 @@ class UserService(
         )
 
         if (userRepository.existsByEmail(request.email)) {
-            return Response.Err(HttpStatus.CONFLICT, "A user with this email already exists.")
+            // return Response.Err(HttpStatus.CONFLICT, "A user with this email already exists.")
+            throw AppException(ErrorCode.USER__EMAIL_EXISTED)
         }
 
-        if (userRepository.existsByUsername(request.username)) {
-            return Response.Err(HttpStatus.CONFLICT, "A user with this username already exists.")
-        }
+        // if (userRepository.existsByUsername(request.username)) {
+        //     return Response.Err(HttpStatus.CONFLICT, "A user with this username already exists.")
+        // }
+        // val ret = ApiResponse(result=user) 
 
-        return try {
-            Response.Ok(userRepository.save(user))
-        } catch (e: Exception) {
-            Response.Err(HttpStatus.INTERNAL_SERVER_ERROR, e.toString())
-        }
+        return ApiResponse(result=user);
+
+        // return try {
+        //     // Response.Ok(userRepository.save(user))
+        //     ApiResponse.result
+        // } catch (e: AppException) {
+        //     // Response.Err(HttpStatus.INTERNAL_SERVER_ERROR, e.toString())
+        //     ApiResponse.(ErrorCode.USER__USER_NOT_FOUND)
+        // }
     }
 
     fun getUserById(id: UUID): User? {
         return try {
             userRepository.getReferenceById(id)
         } catch (e: Exception) {
-            null
+           throw ApiResponse.(ErrorCode.USER__USER_NOT_FOUND)
         }
     }
 
@@ -55,20 +63,24 @@ class UserService(
         return userRepository.existsByUserId(id)
     }
 
-    fun userLoginRequest(request: UserLoginRequest): Response<User, HttpStatus> {
+    // fun userLoginRequest(request: UserLoginRequest): Response<User, HttpStatus> {
+    fun userLoginRequest(request: UserLoginRequest): ApiResponse<User> {
         try {
             val user = userRepository.findByUsername(request.username)
-            user ?: return Response.Err(HttpStatus.NOT_FOUND, "Can't find user.")
+            // user ?: return Response.Err(HttpStatus.NOT_FOUND, "Can't find user.")
+            user ?: return ApiResponse.(ErrorCode.USER__USER_NOT_FOUND)
 
             if (!passwordEncoder.matches(request.password, user.passwordHash)) {
-                return Response.Err(HttpStatus.UNAUTHORIZED, "Wrong password.")
+                // return Response.Err(HttpStatus.UNAUTHORIZED, "Wrong password.")
+                return ApiResponse.(ErrorCode.USER__WRONG_PASSWORD)
             }
 
             LOGGED_IN_USERS.add(requireNotNull(user.userId))
 
             return Response.Ok(user)
         } catch (e: Exception) {
-            return Response.Err(HttpStatus.INTERNAL_SERVER_ERROR, e.toString())
+            // return Response.Err(HttpStatus.INTERNAL_SERVER_ERROR, e.toString())
+            throw ApiResponse.(ErrorCode.USER__WRONG_PASSWORD)
         }
     }
 }
