@@ -36,8 +36,8 @@ The project currently enables the `local` profile in [application.properties](./
 ### Step 1: Copy the example file
 
 ```bash
-cp src/main/resources/application-local.properties.example \
-   src/main/resources/application-local.properties
+cp src/main/resources/application.properties.example \
+   src/main/resources/application.properties
 ```
 
 ### Step 2: Fill in your Neon/PostgreSQL credentials
@@ -101,31 +101,46 @@ Notes:
 - Do not commit `application-local.properties`
 - That file is already ignored in `.gitignore`
 
-## Running the Backend
+## Create the Docker Image
 
 From the `backend/` directory, run:
 
 ```bash
-./gradlew bootRun
+docker build -t snapflash-backend .
 ```
 
-On Windows:
+After finish building the image, create a container based on that image:
 
-```bat
-gradlew.bat bootRun
+```bash
+docker run --name snapflash-backend -p 8080:8080 snapflash-backend:latest
 ```
 
-If everything is configured correctly, the app will start on:
+The backend will automatically run after creating the container 
+Run this command if the container is existed: 
 
-```text
-http://localhost:8080
+```bash
+docker start snapflash-backend
 ```
 
-## Running Tests
+If everything is configured correctly, the app will start on: <b>http://localhost:8080</b>
+
+To attach to the container's terminal:
+
+```bash
+docker exec -it snapflash-backend bash
+```
+To run tests
 
 ```bash
 ./gradlew test
 ```
+
+To stop the container and the backend:
+
+```bash
+docker stop snapflash-backend
+```
+
 
 ## Why Does localhost Show a Login Page?
 
