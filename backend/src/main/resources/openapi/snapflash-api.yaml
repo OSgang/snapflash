@@ -79,7 +79,7 @@ paths:
     post:
       tags: [User]
       summary: Login user
-      description: Authenticates a user and sets the user_id cookie.
+      description: Send a JWT to client.
       requestBody:
         required: true
         content:
@@ -108,6 +108,40 @@ paths:
                 example: "Hello testuser"
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /user/logout:
+    get:
+      tags: [ User ]
+      summary: User logouts of app
+      description: Invalidate current access token or session.
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Logout successful"
+
+
+  /auth/logout:
+    post:
+      tags:
+        - User
+      summary: Logout current user
+      description: Invalidate current access token or session.
+
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Logout successfully
 
   /user/greet:
     get:

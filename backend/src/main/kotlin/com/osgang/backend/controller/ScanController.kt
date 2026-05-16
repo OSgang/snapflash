@@ -1,5 +1,6 @@
 package com.osgang.backend.controller
 
+import com.osgang.backend.dto.response.ApiResponse
 import com.osgang.backend.dto.response.CardCandidateResponse
 import com.osgang.backend.service.DictionaryService
 import com.osgang.backend.service.ScanService
@@ -20,15 +21,15 @@ class ScanController (
     fun scanAndCreate(
         @CookieValue("user_id") userId: UUID,
         @RequestParam multipartFile: MultipartFile,
-    ): Set<CardCandidateResponse> {
+    ): ApiResponse<Set<CardCandidateResponse>> {
         println("Scanning ${multipartFile.originalFilename}")
-        return scansService.extractOCR(multipartFile)
+        return ApiResponse(result = scansService.extractOCR(multipartFile))
     }
 
     @GetMapping("/lookup")
     fun lookupWord(
         @RequestParam("word") word: String,
-    ): List<String> {
-        return dictionaryService.lookup(word)
+    ): ApiResponse<List<String>> {
+        return ApiResponse(result = dictionaryService.lookup(word))
     }
 }

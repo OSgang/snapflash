@@ -1,5 +1,6 @@
 package com.osgang.backend.repository
 
+import com.osgang.backend.dto.response.ApiResponse
 import com.osgang.backend.entity.Deck
 import com.osgang.backend.entity.User
 import org.springframework.data.jpa.repository.JpaRepository
@@ -10,7 +11,7 @@ import java.util.*
 interface DeckRepository : JpaRepository<Deck, UUID> {
 
     // Fetch all decks belonging to a specific user using the user's UUID
-    fun findByUserUserId(userId: UUID): List<Deck>
+    fun findByUserUserId(userId: UUID): ApiResponse<List<Deck>>
 
     // Alternatively, fetch passing the whole User entity
     fun findByUser(user: User): List<Deck>
