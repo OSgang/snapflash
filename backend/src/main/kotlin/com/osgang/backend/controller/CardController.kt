@@ -1,7 +1,10 @@
 package com.osgang.backend.controller
 
 import com.osgang.backend.dto.request.CardCreationRequest
+import com.osgang.backend.dto.response.ApiResponse
 import com.osgang.backend.entity.Flashcard
+import com.osgang.backend.exception.AppException
+import com.osgang.backend.exception.ErrorCode
 import com.osgang.backend.service.CardService
 import com.osgang.backend.service.UserService
 import org.springframework.http.ResponseEntity
@@ -18,10 +21,9 @@ class CardController(
     fun requestNewCard(
         @CookieValue("user_id") userId: UUID,
         @RequestBody cardReq: CardCreationRequest
-    ): ResponseEntity<String> {
+    ): ApiResponse<Flashcard> {
 
-        val deck = cardService.getDeck(cardReq.deckId) ?: return ResponseEntity.badRequest()
-            .body("Invalid UUID for deck doesn't exist.")
+        val deck = cardService.getDeck(cardReq.deckId) ?: throw AppException(ErrorCode.DECK__DECK_NOT_FOUND)
 
         val card = Flashcard(
             deck,
@@ -30,6 +32,6 @@ class CardController(
             cardReq.definition,
         )
 
-        return ResponseEntity.ok(cardService.saveCard(card).flashcardId.toString())
+        return ApiResponse(result = cardService.saveCard(card))
     }
 }

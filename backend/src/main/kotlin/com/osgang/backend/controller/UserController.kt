@@ -16,12 +16,12 @@ class UserController(
 ) {
     @PostMapping("/register")
     fun registerUser(@RequestBody request: UserCreationRequest): ApiResponse<User> {
-        return userService.userCreationRequest(request)
+        return ApiResponse(result = userService.userCreationRequest(request))
     }
 
     @PostMapping("/login")
     fun loginUser(@RequestBody request: UserLoginRequest): ApiResponse<User> {
-        return userService.userLoginRequest(request)
+        return ApiResponse(result = userService.userLoginRequest(request))
     }
 
     @GetMapping("/greet")

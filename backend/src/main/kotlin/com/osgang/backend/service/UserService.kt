@@ -20,7 +20,7 @@ class UserService(
     private val passwordEncoder: PasswordEncoder = BCryptPasswordEncoder(),
 ) {
     // fun userCreationRequest(request: UserCreationRequest): Response<User, HttpStatus> {
-    fun userCreationRequest(request: UserCreationRequest): ApiResponse<User> {
+    fun userCreationRequest(request: UserCreationRequest): User {
         val user = User(
             email = request.email,
             username = request.username,
@@ -36,7 +36,7 @@ class UserService(
         // }
         // val ret = ApiResponse(result=user)
 
-        return ApiResponse(result = user)
+        return userRepository.save(user)
         // return try {
         //     // Response.Ok(userRepository.save(user))
         //     ApiResponse.result
@@ -59,7 +59,7 @@ class UserService(
     }
 
     // fun userLoginRequest(request: UserLoginRequest): Response<User, HttpStatus> {
-    fun userLoginRequest(request: UserLoginRequest): ApiResponse<User> {
+    fun userLoginRequest(request: UserLoginRequest): User {
         val user = userRepository.findByUsername(request.username)
         // user ?: return Response.Err(HttpStatus.NOT_FOUND, "Can't find user.")
         user ?: throw AppException(ErrorCode.USER__USER_NOT_FOUND)
@@ -71,6 +71,6 @@ class UserService(
 
         LOGGED_IN_USERS.add(requireNotNull(user.userId))
 
-        return ApiResponse(result = user)
+        return user
     }
 }

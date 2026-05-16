@@ -16,6 +16,7 @@ class User(
     var username: String,
 
     @Column(name = "password_hash", nullable = false)
+    @JsonIgnore
     var passwordHash: String
 ) {
     @Id

@@ -16,7 +16,9 @@ enum class ErrorCode(
     USER__EMAIL_EXISTED(409, "A user with this email already exists"),
     USER__WRONG_PASSWORD(400, "Wrong password"),
     DECK__DECK_NOT_FOUND(404, "Deck not found"),
-    CARD__CARD_NOT_FOUND(404, "Card not found");
+    CARD__CARD_NOT_FOUND(404, "Card not found"),
+
+    SCAN__FAILED(500, "Scan failed"),
 }
 
 
