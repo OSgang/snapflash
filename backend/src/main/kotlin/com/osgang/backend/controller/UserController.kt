@@ -26,14 +26,9 @@ class UserController(
 
     @GetMapping("/greet")
     fun greet(): String {
-        return "♪♪♪ So, get away\n" +
-                "Another way to feel what you didn't want yourself to know\n" +
-                "And let yourself go\n" +
-                "You know you didn't lose your self-control\n" +
-                "Let's start at the rainbow\n" +
-                "Turn away\n" +
-                "Another way to be where you didn't want yourself to go\n" +
-                "And let yourself go\n" +
-                "Is that a compromise? ♪♪♪"
+        return "♪♪♪ My pussy tastes like Pepsi Cola\n" +
+                "My eyes are wide like cherry pies\n" +
+                "I gots a taste for men who are older\n" +
+                "It's always been so it's no surprise ♪♪♪"
     }
 }

@@ -23,7 +23,7 @@ class ScanController (
         @RequestParam multipartFile: MultipartFile,
     ): ApiResponse<Set<CardCandidateResponse>> {
         println("Scanning ${multipartFile.originalFilename}")
-        return ApiResponse(result = scansService.extractOCR(multipartFile))
+        return ApiResponse(result = scansService.getCardCandidates(multipartFile))
     }
 
     @GetMapping("/lookup")
