@@ -1,5 +1,6 @@
 package com.osgang.backend.service
 
+import com.osgang.backend.dto.response.ApiResponse
 import com.osgang.backend.entity.Deck
 import com.osgang.backend.entity.Flashcard
 import com.osgang.backend.repository.DeckRepository
@@ -40,7 +41,7 @@ class CardService(
         return deckRepository.save(deck)
     }
 
-    fun findAllDecksByUserId(userId: UUID): List<Deck> {
+    fun findAllDecksByUserId(userId: UUID): ApiResponse<List<Deck>> {
         return deckRepository.findByUserUserId(userId)
     }
 }

@@ -1,6 +1,8 @@
 package com.osgang.backend.service
 
 import com.osgang.backend.dto.response.CardCandidateResponse
+import com.osgang.backend.exception.AppException
+import com.osgang.backend.exception.ErrorCode
 import net.sourceforge.tess4j.Tesseract
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -51,7 +53,7 @@ class ScanService (
             extractedText
         } catch (e: Exception) {
             println("OCR Processing failed: ${e.message}}")
-            throw RuntimeException("Failed to extract text from image", e)
+            throw AppException(ErrorCode.SCAN__FAILED)
         } finally {
             if (tempFile.exists()) {
                 tempFile.delete()
