@@ -41,7 +41,7 @@ class CardService(
         return deckRepository.save(deck)
     }
 
-    fun findAllDecksByUserId(userId: UUID): ApiResponse<List<Deck>> {
+    fun findAllDecksByUserId(userId: UUID): List<Deck> {
         return deckRepository.findByUserUserId(userId)
     }
 }

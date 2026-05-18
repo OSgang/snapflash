@@ -61,10 +61,17 @@ paths:
         '200':
           description: User successfully created
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "User created."
+                type: object
+                example:
+                  code: 200
+                  message: "Success"
+                  result:
+                    email: "phuc@gmail.com"
+                    username: "phuc"
+                    userid: "xxxxxx-xxxxxx-xxxxx-xxxxxx"
+
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
@@ -95,22 +102,22 @@ paths:
       responses:
         '200':
           description: Login successful
-          headers:
-            Set-Cookie:
-              description: HTTP-only cookie containing the user_id
-              schema:
-                type: string
-                example: "user_id=550e8400-e29b-41d4-a716-446655440000; HttpOnly; Secure; SameSite=Strict"
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: "Hello testuser"
+                type: object
+                example:
+                  code: 200
+                  message: "Success"
+                  result:
+                    email: "phuc@gmail.com"
+                    username: "phuc"
+                    userid: "xxxxxx-xxxxxx-xxxxx-xxxxxx"
         '401':
           $ref: '#/components/responses/Unauthorized'
 
   /user/logout:
-    get:
+    post:
       tags: [ User ]
       summary: User logouts of app
       description: Invalidate current access token or session.
@@ -123,25 +130,46 @@ paths:
                 type: string
                 example: "Logout successful"
 
-
-  /auth/logout:
-    post:
-      tags:
-        - User
-      summary: Logout current user
-      description: Invalidate current access token or session.
-
-      responses:
-        '200':
-          description: Logout successful
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Logout successfully
+#  /user/logout1:
+#    post:
+#      tags: [ User ]
+#      summary: Logout user
+#      description: |
+#        Invalidate the current access token or refresh token.
+#        Requires authenticated user.
+#
+#      security:
+#        - bearerAuth: [ ]
+#
+#      requestBody:
+#        required: false
+#        content:
+#          application/json:
+#            schema:
+#              type: object
+#              properties:
+#                refreshToken:
+#                  type: string
+#                  description: Refresh token to revoke
+#            examples:
+#              logout:
+#                summary: Logout request
+#                value:
+#                  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+#
+#      responses:
+#        '200':
+#          description: Logout successful
+#          content:
+#            application/json:
+#              schema:
+#                type: object
+#                example:
+#                  code: 200
+#                  message: "Logout successful"
+#
+#        '401':
+#          $ref: '#/components/responses/Unauthorized'
 
   /user/greet:
     get:
