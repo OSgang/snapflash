@@ -7,7 +7,7 @@ import com.osgang.backend.exception.AppException
 import com.osgang.backend.exception.ErrorCode
 import com.osgang.backend.service.CardService
 import com.osgang.backend.service.UserService
-import org.springframework.http.ResponseEntity
+//import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -22,6 +22,9 @@ class CardController(
         @CookieValue("user_id") userId: UUID,
         @RequestBody cardReq: CardCreationRequest
     ): ApiResponse<Flashcard> {
+
+        //find USER ???
+        val user = userService.getUserById(userId) ?: throw AppException(ErrorCode.USER__USER_NOT_FOUND)
 
         val deck = cardService.getDeck(cardReq.deckId) ?: throw AppException(ErrorCode.DECK__DECK_NOT_FOUND)
 
