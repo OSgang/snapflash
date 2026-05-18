@@ -1,3 +1,5 @@
+name: snapflash
+
 services:
   backend:
     build:
