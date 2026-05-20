@@ -5,14 +5,11 @@ import com.osgang.backend.dto.request.CardFlipUpdateRequest
 import com.osgang.backend.dto.response.ApiResponse
 import com.osgang.backend.dto.response.CardFlipUpdateResponse
 import com.osgang.backend.entity.Flashcard
-import com.osgang.backend.exception.AppException
-import com.osgang.backend.exception.ErrorCode
 import com.osgang.backend.service.AuthenticationService
 import com.osgang.backend.service.CardService
 import com.osgang.backend.service.UserService
 //import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.util.*
 
 @RestController
 @RequestMapping("/card")
@@ -25,7 +22,7 @@ class CardController(
     fun requestNewCard(
         @RequestBody request: CardCreationRequest
     ): ApiResponse<Flashcard> {
-        return ApiResponse(result = cardService.saveCard(request))
+        return ApiResponse(result = cardService.createNewCard(request))
     }
 
     @PatchMapping("/flip")

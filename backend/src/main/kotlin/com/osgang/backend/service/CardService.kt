@@ -40,7 +40,7 @@ class CardService(
         return cards
     }
 
-    fun saveCard(request: CardCreationRequest): Flashcard {
+    fun createNewCard(request: CardCreationRequest): Flashcard {
         val deck = deckRepository.findByIdOrNull(request.deckId)
             ?: throw AppException(ErrorCode.DECK__DECK_NOT_FOUND)
 
@@ -67,7 +67,7 @@ class CardService(
     fun updateFlipCount(cardId: UUID, newFlipCount: Int): Flashcard {
         val card = flashcardRepository.findByFlashcardId(cardId)
         card.flipCount = newFlipCount
-        return saveCard(card)
+        return flashcardRepository.save(card)
     }
 
     fun findAllDecksByUserId(userId: UUID): List<Deck> {
