@@ -133,46 +133,46 @@ paths:
                   message: "Success"
                   result: "Logout successful"
 
-#  /user/logout1:
-#    post:
-#      tags: [ User ]
-#      summary: Logout user
-#      description: |
-#        Invalidate the current access token or refresh token.
-#        Requires authenticated user.
-#
-#      security:
-#        - bearerAuth: [ ]
-#
-#      requestBody:
-#        required: false
-#        content:
-#          application/json:
-#            schema:
-#              type: object
-#              properties:
-#                refreshToken:
-#                  type: string
-#                  description: Refresh token to revoke
-#            examples:
-#              logout:
-#                summary: Logout request
-#                value:
-#                  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-#
-#      responses:
-#        '200':
-#          description: Logout successful
-#          content:
-#            application/json:
-#              schema:
-#                type: object
-#                example:
-#                  code: 200
-#                  message: "Logout successful"
-#
-#        '401':
-#          $ref: '#/components/responses/Unauthorized'
+  #  /user/logout1:
+  #    post:
+  #      tags: [ User ]
+  #      summary: Logout user
+  #      description: |
+  #        Invalidate the current access token or refresh token.
+  #        Requires authenticated user.
+  #
+  #      security:
+  #        - bearerAuth: [ ]
+  #
+  #      requestBody:
+  #        required: false
+  #        content:
+  #          application/json:
+  #            schema:
+  #              type: object
+  #              properties:
+  #                refreshToken:
+  #                  type: string
+  #                  description: Refresh token to revoke
+  #            examples:
+  #              logout:
+  #                summary: Logout request
+  #                value:
+  #                  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  #
+  #      responses:
+  #        '200':
+  #          description: Logout successful
+  #          content:
+  #            application/json:
+  #              schema:
+  #                type: object
+  #                example:
+  #                  code: 200
+  #                  message: "Logout successful"
+  #
+  #        '401':
+  #          $ref: '#/components/responses/Unauthorized'
 
   /user/greet:
     get:
@@ -193,23 +193,23 @@ paths:
       tags: [Deck]
       summary: Get all decks for current user
       description: Returns all flashcard decks belonging to the authenticated user.
-#      parameters:
-#        - name: user_id
-#          in: cookie
-#          required: true
-#          description: UUID of the authenticated user
-#          schema:
-#            type: string
-#            format: uuid
+      #      parameters:
+      #        - name: user_id
+      #          in: cookie
+      #          required: true
+      #          description: UUID of the authenticated user
+      #          schema:
+      #            type: string
+      #            format: uuid
       responses:
-#        '200':
-#          description: List of user's decks
-#          content:
-#            application/json:
-#              schema:
-#                type: array
-#                items:
-#                  $ref: '#/components/schemas/Deck'
+        #        '200':
+        #          description: List of user's decks
+        #          content:
+        #            application/json:
+        #              schema:
+        #                type: array
+        #                items:
+        #                  $ref: '#/components/schemas/Deck'
         '200':
           description: List of user's decks
           content:
@@ -237,14 +237,14 @@ paths:
       tags: [Deck]
       summary: Get a specific deck
       description: Returns a single deck by its ID.
-#      parameters:
-#        - name: deckId
-#          in: path
-#          required: true
-#          description: UUID of the deck to retrieve
-#          schema:
-#            type: string
-#            format: uuid
+      #      parameters:
+      #        - name: deckId
+      #          in: path
+      #          required: true
+      #          description: UUID of the deck to retrieve
+      #          schema:
+      #            type: string
+      #            format: uuid
       responses:
         '200':
           description: Deck found
@@ -271,14 +271,14 @@ paths:
       summary: Create a new deck
       description: Creates a new flashcard deck for the authenticated user.
 
-#      parameters:
-#        - name: user_id
-#          in: cookie
-#          required: true
-#          description: UUID of the authenticated user
-#          schema:
-#            type: string
-#            format: uuid
+      #      parameters:
+      #        - name: user_id
+      #          in: cookie
+      #          required: true
+      #          description: UUID of the authenticated user
+      #          schema:
+      #            type: string
+      #            format: uuid
 
       requestBody:
         required: true
@@ -392,46 +392,153 @@ paths:
                 type: string
                 example: "Invalid UUID for deck doesn't exist."
 
+  # /card/flip:
+  #   patch:
+  #     tags: [Card]
+  #     summary: Update flip count for multiple cards
+  #     description: Batch update flip count of flashcards.
+
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             type: array
+  #             items:
+  #               $ref: '#/components/schemas/CardFlipUpdateRequest'
+
+  #           example:
+  #             - cardId: "770e8400-e29b-41d4-a716-446655440000"
+  #               flipCount: 3
+  #             - cardId: "880e8400-e29b-41d4-a716-446655440000"
+  #               flipCount: 5
+
+  #     responses:
+  #       '200':
+  #         description: Flip count updated successfully
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 code:
+  #                   type: integer
+  #                   example: 200
+
+  #                 message:
+  #                   type: string
+  #                   example: Success
+
+  #                 result:
+  #                   type: array
+  #                   items:
+  #                     $ref: '#/components/schemas/CardFlipUpdateResponse'
+  #                   example:
+  #                     - "deckId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+  #                     "cardId": "770e8400-e29b-41d4-a716-446655440000"
+  #                     "flipCount": 3
+
+  #                     - "deckId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+  #                     "cardId": "880e8400-e29b-41d4-a716-446655440000"
+  #                     "flipCount": 5
+  /card/flip:
+    patch:
+      tags: [Card]
+      summary: Update flip count for multiple cards
+      description: Batch update flip count of flashcards.
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CardFlipUpdateRequest'
+
+            example:
+              - cardId: "770e8400-e29b-41d4-a716-446655440000"
+                flipCount: 3
+              - cardId: "880e8400-e29b-41d4-a716-446655440000"
+                flipCount: 5
+
+      responses:
+        '200':
+          description: Flip count updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+
+                  message:
+                    type: string
+                    example: Success
+
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CardFlipUpdateResponse'
+
+              example:
+                code: 200
+                message: Success
+                result:
+                  - deckId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    cardId: "770e8400-e29b-41d4-a716-446655440000"
+                    flipCount: 3
+
+                  - deckId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    cardId: "880e8400-e29b-41d4-a716-446655440000"
+                    flipCount: 5
+
+
+
+
+
   /scan:
-#    post:
-#      tags: [Scan]
-#      summary: Scan image and generate flashcard candidates
-#      description: |
-#        Uploads an image for OCR processing. The backend performs OCR using Tesseract4J, extracts English words, looks them up in the bundled  English-Vietnamese dictionary, and returns flashcard candidates for user review.
-#      requestBody:
-#        required: true
-#        content:
-#          multipart/form-data:
-#            schema:
-#              type: object
-#              properties:
-#                image:
-#                  type: string
-#                  format: binary
-#                  description: Image file to scan (JPEG/PNG)
-#              required: [image]
-#      responses:
-#        '200':
-#          description: OCR and dictionary lookup successful
-#          content:
-#            application/json:
-#              schema:
-#                $ref: '#/components/schemas/CardCandidateResponse'
-#              examples:
-#                success:
-#                  summary: Successful scan with word candidates
-#                  value:
-#                    data:
-#                      scanId: "770e8400-e29b-41d4-a716-446655440000"
-#                      words:
-#                        - word: "hello"
-#                          translation: "xin chào"
-#                          definition: "A greeting used when meeting someone"
-#                        - word: "world"
-#                          translation: "thế giới"
-#                          definition: "The earth and all the people on it"
-#                    error: null
-#                    status: 200
+    #    post:
+    #      tags: [Scan]
+    #      summary: Scan image and generate flashcard candidates
+    #      description: |
+    #        Uploads an image for OCR processing. The backend performs OCR using Tesseract4J, extracts English words, looks them up in the bundled  English-Vietnamese dictionary, and returns flashcard candidates for user review.
+    #      requestBody:
+    #        required: true
+    #        content:
+    #          multipart/form-data:
+    #            schema:
+    #              type: object
+    #              properties:
+    #                image:
+    #                  type: string
+    #                  format: binary
+    #                  description: Image file to scan (JPEG/PNG)
+    #              required: [image]
+    #      responses:
+    #        '200':
+    #          description: OCR and dictionary lookup successful
+    #          content:
+    #            application/json:
+    #              schema:
+    #                $ref: '#/components/schemas/CardCandidateResponse'
+    #              examples:
+    #                success:
+    #                  summary: Successful scan with word candidates
+    #                  value:
+    #                    data:
+    #                      scanId: "770e8400-e29b-41d4-a716-446655440000"
+    #                      words:
+    #                        - word: "hello"
+    #                          translation: "xin chào"
+    #                          definition: "A greeting used when meeting someone"
+    #                        - word: "world"
+    #                          translation: "thế giới"
+    #                          definition: "The earth and all the people on it"
+    #                    error: null
+    #                    status: 200
     post:
       tags: [ Scan ]
       summary: Scan image and extract card candidates
@@ -686,22 +793,22 @@ components:
     CardCandidateResponse:
       type: object
       properties:
-#        data:
-#          type: object
-#          properties:
-#            scanId:
-#              type: string
-#              format: uuid
-#              example: "770e8400-e29b-41d4-a716-446655440000"
-          word:
+        #        data:
+        #          type: object
+        #          properties:
+        #            scanId:
+        #              type: string
+        #              format: uuid
+        #              example: "770e8400-e29b-41d4-a716-446655440000"
+        word:
+          type: string
+          example: hello
+        translation:
+          type: array
+          items:
             type: string
-            example: hello
-          translation:
-            type: array
-            items:
-              type: string
-            example:
-              - "xin chào"
+          example:
+            - "xin chào"
       description: Response wrapper for scan endpoint
 
     ErrorResponse:
@@ -718,6 +825,34 @@ components:
           type: integer
           example: 400
       description: Error response wrapper
+
+    CardFlipUpdateRequest:
+      # description: CardFlipUpdateRequest
+      type: object
+      properties:
+        cardId:
+          type: string
+          example: "770e8400-e29b-41d4-a716-446655440000"
+
+        flipCount:
+          type: integer
+          example: 3
+
+    CardFlipUpdateResponse:
+      # description: CardFlipUpdateRequest
+      type: object
+      properties:
+        deckId:
+          type: string
+          format: uuid
+
+        cardId:
+          type: string
+          format: uuid
+
+        flipCount:
+          type: integer
+          example: 3
 
   responses:
     BadRequest:
@@ -754,3 +889,5 @@ components:
             data: null
             error: "An unexpected error occurred"
             status: 500
+
+
