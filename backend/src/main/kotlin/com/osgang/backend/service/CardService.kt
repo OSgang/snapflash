@@ -1,5 +1,6 @@
 package com.osgang.backend.service
 
+import com.osgang.backend.dto.request.CardCreationRequest
 import com.osgang.backend.dto.request.DeckCreationRequest
 import com.osgang.backend.entity.Deck
 import com.osgang.backend.entity.Flashcard
@@ -16,7 +17,7 @@ import java.util.*
 class CardService(
     private val flashcardRepository: FlashcardRepository,
     private val deckRepository: DeckRepository,
-    private val userRepository: UserRepository,
+    private val userRepository: UserRepository
 ) {
     fun findAllCardsByDeckId(deckId: UUID): List<Flashcard> {
         return flashcardRepository.findByDeckDeckId(deckId)
@@ -39,7 +40,17 @@ class CardService(
         return cards
     }
 
-    fun saveCard(card: Flashcard): Flashcard {
+    fun saveCard(request: CardCreationRequest): Flashcard {
+        val deck = deckRepository.findByIdOrNull(request.deckId)
+            ?: throw AppException(ErrorCode.DECK__DECK_NOT_FOUND)
+
+        val card = Flashcard(
+            deck,
+            request.word,
+            request.translation,
+            request.definition,
+        )
+
         return flashcardRepository.save(card)
     }
 

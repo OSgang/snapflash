@@ -23,15 +23,6 @@ class CardController(
     fun requestNewCard(
         @RequestBody request: CardCreationRequest
     ): ApiResponse<Flashcard> {
-        val deck = cardService.getDeck(request.deckId)
-
-        val card = Flashcard(
-            deck,
-            request.word,
-            request.translation,
-            request.definition,
-        )
-
-        return ApiResponse(result = cardService.saveCard(card))
+        return ApiResponse(result = cardService.saveCard(request))
     }
 }

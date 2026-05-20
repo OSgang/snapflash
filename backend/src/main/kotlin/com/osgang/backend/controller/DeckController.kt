@@ -43,6 +43,9 @@ class DeckController(
         val jwtToken = authorizationHeader.replace("Bearer ", "")
         val userId = UUID.fromString(authenticationService.extractUserId(jwtToken))
 
+        println("JWT token: $jwtToken")
+        println("User id: $userId")
+
         return ApiResponse(result = cardService.createDeck(userId, request))
     }
 }

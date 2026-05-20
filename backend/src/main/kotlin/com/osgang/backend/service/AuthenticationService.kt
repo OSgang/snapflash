@@ -41,15 +41,13 @@ class AuthenticationService (
 
         val isVerified = signedJWT.verify(verifier)
 
-        try {
-            return IntrospectResponse(
-                isValid = isVerified && expirationTime.after(Date())
-            )
-        } catch (e: Exception) {
+        if (!isVerified) {
             throw AppException(ErrorCode.JWT__INVALID_TOKEN)
         }
 
-
+        return IntrospectResponse(
+                isValid = isVerified && expirationTime.after(Date())
+        )
     }
 
     fun authenticate(request: AuthenticationRequest): AuthenticationResponse {
@@ -74,10 +72,7 @@ class AuthenticationService (
     }
 
     fun generateJWTToken(userId: UUID): String {
-        println("THE KEY IS: $SIGNER_KEY")
-        println("THE LENGTH IS: ${SIGNER_KEY.length}")
-
-        val jwsHeader = JWSHeader(JWSAlgorithm.HS512)
+        val jwsHeader = JWSHeader(JWSAlgorithm.HS256)
 
         val jwtClaimset = JWTClaimsSet.Builder()
             .subject(userId.toString())
