@@ -20,4 +20,6 @@ interface UserRepository : JpaRepository<User, UUID> {
 
     // Optional: Find by username if you plan to allow login via username
     fun findByUsername(username: String): User?
+
+    fun findByUserId(userId: UUID): User?
 }

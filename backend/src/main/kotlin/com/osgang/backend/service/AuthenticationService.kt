@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.Date
+import java.util.UUID
 
 @Service
 class AuthenticationService (
@@ -40,9 +41,15 @@ class AuthenticationService (
 
         val isVerified = signedJWT.verify(verifier)
 
-        return IntrospectResponse(
-            isValid = isVerified && expirationTime.after(Date())
-        )
+        try {
+            return IntrospectResponse(
+                isValid = isVerified && expirationTime.after(Date())
+            )
+        } catch (e: Exception) {
+            throw AppException(ErrorCode.JWT__INVALID_TOKEN)
+        }
+
+
     }
 
     fun authenticate(request: AuthenticationRequest): AuthenticationResponse {
@@ -56,7 +63,8 @@ class AuthenticationService (
             throw AppException(ErrorCode.USER__WRONG_PASSWORD)
         }
 
-        val jwtToken = generateJWTToken(request.username)
+        val userId = user.userId
+        val jwtToken = generateJWTToken(userId!!)
 
         return AuthenticationResponse(
             jwtToken,
@@ -65,14 +73,14 @@ class AuthenticationService (
         )
     }
 
-    fun generateJWTToken(username: String): String {
+    fun generateJWTToken(userId: UUID): String {
         println("THE KEY IS: $SIGNER_KEY")
         println("THE LENGTH IS: ${SIGNER_KEY.length}")
 
         val jwsHeader = JWSHeader(JWSAlgorithm.HS512)
 
         val jwtClaimset = JWTClaimsSet.Builder()
-            .subject(username)
+            .subject(userId.toString())
             .issuer("osgang.com")
             .issueTime(Date())
             .expirationTime(Date(
@@ -90,6 +98,15 @@ class AuthenticationService (
 
         } catch (e: JOSEException) {
             throw RuntimeException("Error while generating JWT token", e)
+        }
+    }
+
+    fun extractUserId(jwtToken: String): String {
+        try {
+            val signedJWT = SignedJWT.parse(jwtToken)
+            return signedJWT.jwtClaimsSet.subject
+        } catch (e: JOSEException) {
+            throw AppException(ErrorCode.JWT__INVALID_TOKEN)
         }
     }
 }
