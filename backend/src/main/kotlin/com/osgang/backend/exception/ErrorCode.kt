@@ -17,6 +17,7 @@ enum class ErrorCode(
     USER__WRONG_PASSWORD(400, "Wrong password"),
     DECK__DECK_NOT_FOUND(404, "Deck not found"),
     CARD__CARD_NOT_FOUND(404, "Card not found"),
+    JWT__INVALID_TOKEN(409, "Invalid JWT token"),
 
     SCAN__FAILED(500, "Scan failed"),
 }

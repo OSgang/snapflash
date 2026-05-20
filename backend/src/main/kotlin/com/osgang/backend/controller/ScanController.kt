@@ -19,7 +19,6 @@ class ScanController (
 ) {
     @PostMapping("/scan")
     fun scanAndCreate(
-        @CookieValue("user_id") userId: UUID,
         @RequestParam multipartFile: MultipartFile,
     ): ApiResponse<Set<CardCandidateResponse>> {
         println("Scanning ${multipartFile.originalFilename}")

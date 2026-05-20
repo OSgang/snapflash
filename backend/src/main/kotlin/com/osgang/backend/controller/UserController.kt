@@ -1,9 +1,14 @@
 package com.osgang.backend.controller
 
+import com.osgang.backend.dto.request.AuthenticationRequest
+import com.osgang.backend.dto.request.IntrospectRequest
 import com.osgang.backend.dto.request.UserCreationRequest
 import com.osgang.backend.dto.request.UserLoginRequest
 import com.osgang.backend.dto.response.ApiResponse
+import com.osgang.backend.dto.response.AuthenticationResponse
+import com.osgang.backend.dto.response.IntrospectResponse
 import com.osgang.backend.entity.User
+import com.osgang.backend.service.AuthenticationService
 import com.osgang.backend.service.UserService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -12,7 +17,8 @@ import java.util.*
 @RestController
 @RequestMapping("/user")
 class UserController(
-    private val userService: UserService
+    private val userService: UserService,
+    private val authenticationService: AuthenticationService
 ) {
     @PostMapping("/register")
     fun registerUser(@RequestBody request: UserCreationRequest): ApiResponse<User> {
@@ -20,8 +26,17 @@ class UserController(
     }
 
     @PostMapping("/login")
-    fun loginUser(@RequestBody request: UserLoginRequest): ApiResponse<User> {
-        return ApiResponse(result = userService.userLoginRequest(request))
+    fun loginUser(@RequestBody request: AuthenticationRequest): ApiResponse<AuthenticationResponse> {
+        return ApiResponse(
+            result = authenticationService.authenticate(request)
+        )
+    }
+
+    @PostMapping("/introspect")
+    fun authenticate(@RequestBody request: IntrospectRequest): ApiResponse<IntrospectResponse> {
+        return ApiResponse(
+            result = authenticationService.introspect(request)
+        )
     }
 
     @GetMapping("/greet")
