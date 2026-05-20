@@ -129,6 +129,21 @@ Also, you can run this command to create a new container from an existing image:
 docker compose up -d
 ```
 
+When developing, you might want to attach shell, if so, use this command:
+
+```bash
+docker exec -it <container_name> bash
+```
+
+<container_name> snapflash-backend-1
+
+
+To see the running logs, run:
+
+```bash
+docker compose logs -f
+```
+
 If everything is configured correctly, the app will start on: <b>http://localhost:8080</b>
 
 ## Why Does localhost Show a Login Page?
