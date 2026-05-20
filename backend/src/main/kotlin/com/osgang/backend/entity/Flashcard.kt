@@ -22,7 +22,10 @@ class Flashcard(
     var translation: String,
 
     @Column(name = "definition", nullable = false)
-    var definition: String
+    var definition: String,
+
+    @Column(name = "flipcount", nullable = false)
+    var flipCount: Int = 0
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

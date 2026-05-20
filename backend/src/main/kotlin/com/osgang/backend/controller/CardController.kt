@@ -1,7 +1,9 @@
 package com.osgang.backend.controller
 
 import com.osgang.backend.dto.request.CardCreationRequest
+import com.osgang.backend.dto.request.CardFlipUpdateRequest
 import com.osgang.backend.dto.response.ApiResponse
+import com.osgang.backend.dto.response.CardFlipUpdateResponse
 import com.osgang.backend.entity.Flashcard
 import com.osgang.backend.exception.AppException
 import com.osgang.backend.exception.ErrorCode
@@ -24,5 +26,17 @@ class CardController(
         @RequestBody request: CardCreationRequest
     ): ApiResponse<Flashcard> {
         return ApiResponse(result = cardService.saveCard(request))
+    }
+
+    @PatchMapping("/flip")
+    fun updateFlipCount(@RequestBody req: List<CardFlipUpdateRequest>): ApiResponse<List<CardFlipUpdateResponse>> {
+        val list = mutableListOf<CardFlipUpdateResponse>()
+
+        for (element in req) {
+            val card = cardService.updateFlipCount(element.cardId, element.flipCount)
+            list.add(CardFlipUpdateResponse(card.deck.deckId!!, card.flashcardId!!, card.flipCount))
+        }
+
+        return ApiResponse(result = list)
     }
 }
