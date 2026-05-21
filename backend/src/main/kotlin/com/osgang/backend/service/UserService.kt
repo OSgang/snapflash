@@ -7,7 +7,6 @@ import com.osgang.backend.entity.User
 import com.osgang.backend.exception.ErrorCode
 import com.osgang.backend.dto.response.ApiResponse
 import com.osgang.backend.exception.AppException
-import com.osgang.backend.middleware.LOGGED_IN_USERS
 import com.osgang.backend.repository.UserRepository
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -69,7 +68,7 @@ class UserService(
             throw AppException(ErrorCode.USER__WRONG_PASSWORD)
         }
 
-        LOGGED_IN_USERS.add(requireNotNull(user.userId))
+//        LOGGED_IN_USERS.add(requireNotNull(user.userId))
 
         return user
     }

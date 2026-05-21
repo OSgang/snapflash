@@ -101,46 +101,50 @@ Notes:
 - Do not commit `application-local.properties`
 - That file is already ignored in `.gitignore`
 
-## Create the Docker Image
+## Create the Docker Image and Container
 
-From the `backend/` directory, run:
+For first time run, from the `backend/` directory, simply run:
 
 ```bash
-docker build -t snapflash-backend .
+docker compose up -d --build
 ```
 
-After finish building the image, create a container based on that image:
+The backend will automatically run after creating the container .
+
+If you want to delete the container but keep the image:
 
 ```bash
-docker run --name snapflash-backend -p 8080:8080 snapflash-backend:latest
+docker compose down
 ```
 
-The backend will automatically run after creating the container 
-Run this command if the container is existed: 
+or if you want to restart the container after making changes in the source code:
 
 ```bash
-docker start snapflash-backend
+docker compose restart
+```
+
+Also, you can run this command to create a new container from an existing image: 
+
+```bash
+docker compose up -d
+```
+
+When developing, you might want to attach shell, if so, use this command:
+
+```bash
+docker exec -it <container_name> bash
+```
+
+<container_name> snapflash-backend-1
+
+
+To see the running logs, run:
+
+```bash
+docker compose logs -f
 ```
 
 If everything is configured correctly, the app will start on: <b>http://localhost:8080</b>
-
-To attach to the container's terminal:
-
-```bash
-docker exec -it snapflash-backend bash
-```
-To run tests
-
-```bash
-./gradlew test
-```
-
-To stop the container and the backend:
-
-```bash
-docker stop snapflash-backend
-```
-
 
 ## Why Does localhost Show a Login Page?
 

@@ -1,0 +1,14 @@
+name: snapflash
+
+services:
+  backend:
+    build:
+      context: .
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      - .:/app
+
+    command: ["./gradlew", "bootRun"]
