@@ -11,7 +11,7 @@ info:
     - Flashcard creation and management
     - Text scanning with OCR and dictionary lookup
 
-    Authentication is handled via HTTP cookies (user_id).
+    Authentication is handled via Bearer JWT tokens.
   contact:
     name: OSgang
     url: https://github.com/OSgang/snapflash
@@ -26,7 +26,7 @@ servers:
     description: Production server
 
 security:
-  - cookieAuth: []
+  - bearerAuth: []
 
 tags:
   - name: User
@@ -44,6 +44,7 @@ paths:
       tags: [User]
       summary: Register a new user
       description: Creates a new user account with email, username, and password.
+      security: []
       requestBody:
         required: true
         content:
@@ -63,36 +64,38 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                example:
-                  code: 200
-                  message: "Success"
-                  result:
-                    email: "phuc@gmail.com"
-                    username: "phuc"
-                    userid: "xxxxxx-xxxxxx-xxxxx-xxxxxx"
+                $ref: '#/components/schemas/ApiResponseUser'
+              example:
+                code: 200
+                message: "Success"
+                result:
+                  email: "user@example.com"
+                  username: "testuser"
+                  userId: "440e8400-e29b-41d4-a716-446655440000"
+                  createdAt: "2026-05-08T10:30:00"
 
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
-          description: Email or username already exists
+          description: Email already exists
           content:
             text/plain:
               schema:
                 type: string
-                example: "Email already exists."
+                example: "A user with this email already exists"
 
   /user/login:
     post:
       tags: [User]
       summary: Login user
       description: Send a JWT to client.
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserLoginRequest'
+              $ref: '#/components/schemas/AuthenticationRequest'
             examples:
               valid:
                 summary: Valid login request
@@ -105,80 +108,72 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                example:
-                  code: 200
-                  message: "Success"
-                  result:
-                    email: "phuc@gmail.com"
-                    username: "phuc"
-                    userid: "xxxxxx-xxxxxx-xxxxx-xxxxxx"
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: '#/components/schemas/ApiResponseAuthentication'
+              example:
+                code: 200
+                message: "Success"
+                result:
+                  jwtToken: "eyJhbGciOiJIUzI1NiJ9..."
+                  isAuthenticated: true
+                  username: "testuser"
+        '400':
+          description: Wrong password
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Wrong password"
+        '404':
+          description: User not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "User not found"
 
-  /user/logout:
+  /user/introspect:
     post:
-      tags: [ User ]
-      summary: User logouts of app
-      description: Invalidate current access token or session.
+      tags: [User]
+      summary: Introspect JWT token
+      description: Checks whether a JWT token is valid and not expired.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntrospectRequest'
+            examples:
+              valid:
+                summary: Valid introspection request
+                value:
+                  jwtToken: "eyJhbGciOiJIUzI1NiJ9..."
       responses:
         '200':
-          description: Logout successful
+          description: Token introspection successful
           content:
             application/json:
               schema:
-                type: object
-                example:
-                  code: 200
-                  message: "Success"
-                  result: "Logout successful"
-
-  #  /user/logout1:
-  #    post:
-  #      tags: [ User ]
-  #      summary: Logout user
-  #      description: |
-  #        Invalidate the current access token or refresh token.
-  #        Requires authenticated user.
-  #
-  #      security:
-  #        - bearerAuth: [ ]
-  #
-  #      requestBody:
-  #        required: false
-  #        content:
-  #          application/json:
-  #            schema:
-  #              type: object
-  #              properties:
-  #                refreshToken:
-  #                  type: string
-  #                  description: Refresh token to revoke
-  #            examples:
-  #              logout:
-  #                summary: Logout request
-  #                value:
-  #                  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  #
-  #      responses:
-  #        '200':
-  #          description: Logout successful
-  #          content:
-  #            application/json:
-  #              schema:
-  #                type: object
-  #                example:
-  #                  code: 200
-  #                  message: "Logout successful"
-  #
-  #        '401':
-  #          $ref: '#/components/responses/Unauthorized'
+                $ref: '#/components/schemas/ApiResponseIntrospect'
+              example:
+                code: 200
+                message: "Success"
+                result:
+                  isValid: true
+        '409':
+          description: Invalid JWT token
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Invalid JWT token"
 
   /user/greet:
     get:
       tags: [User]
       summary: Greeting endpoint
       description: A simple greeting endpoint (for testing).
+      security: []
       responses:
         '200':
           description: Greeting message
@@ -186,84 +181,62 @@ paths:
             text/plain:
               schema:
                 type: string
-                example: "おはようごさいます"
+                example: "Greeting message"
 
   /deck/all:
     get:
       tags: [Deck]
       summary: Get all decks for current user
       description: Returns all flashcard decks belonging to the authenticated user.
-      #      parameters:
-      #        - name: user_id
-      #          in: cookie
-      #          required: true
-      #          description: UUID of the authenticated user
-      #          schema:
-      #            type: string
-      #            format: uuid
       responses:
-        #        '200':
-        #          description: List of user's decks
-        #          content:
-        #            application/json:
-        #              schema:
-        #                type: array
-        #                items:
-        #                  $ref: '#/components/schemas/Deck'
         '200':
           description: List of user's decks
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 200
-
-                  message:
-                    type: string
-                    example: Success
-
-                  result:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Deck'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: '#/components/schemas/ApiResponseDeckList'
+              example:
+                code: 200
+                message: "Success"
+                result:
+                  - deckId: "550e8400-e29b-41d4-a716-446655440000"
+                    deckName: "English Vocabulary"
+                    description: "Basic English words for daily conversation"
+                    createdAt: "2026-05-08T10:30:00"
+                    lastUpdate: "2026-05-08T12:45:00"
+                    flashcards: []
 
   /deck/{deckId}:
     get:
       tags: [Deck]
-      summary: Get a specific deck
-      description: Returns a single deck by its ID.
-      #      parameters:
-      #        - name: deckId
-      #          in: path
-      #          required: true
-      #          description: UUID of the deck to retrieve
-      #          schema:
-      #            type: string
-      #            format: uuid
+      summary: Get flashcards in a deck
+      description: Returns all flashcards belonging to the specified deck.
+      parameters:
+        - name: deckId
+          in: path
+          required: true
+          description: UUID of the deck whose flashcards should be retrieved
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
-          description: Deck found
+          description: List of flashcards in the deck
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 200
-
-                  message:
-                    type: string
-                    example: Success
-                  result:
-                    $ref: '#/components/schemas/Deck'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: '#/components/schemas/ApiResponseFlashcardList'
+              example:
+                code: 200
+                message: "Success"
+                result:
+                  - flashcardId: "660e8400-e29b-41d4-a716-446655440000"
+                    word: "hello"
+                    translation: "xin chào"
+                    definition: "A greeting used when meeting someone"
+                    flipCount: 0
+                    createdAt: "2026-05-08T10:30:00"
+                    lastUpdate: "2026-05-08T12:45:00"
 
   /deck/new:
     post:
@@ -271,22 +244,12 @@ paths:
       summary: Create a new deck
       description: Creates a new flashcard deck for the authenticated user.
 
-      #      parameters:
-      #        - name: user_id
-      #          in: cookie
-      #          required: true
-      #          description: UUID of the authenticated user
-      #          schema:
-      #            type: string
-      #            format: uuid
-
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/DeckCreationRequest'
-            type: object
 
             examples:
               valid:
@@ -301,34 +264,24 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-
-                  code:
-                    type: integer
-                    example: 200
-
-                  message:
-                    type: string
-                    example: Success
-
-                  result:
-                    type: object
-                    properties:
-                      deckName:
-                        type: string
-                        example: "English Vocabulary"
-
-                      description:
-                        type: string
-                        example: "Basic English words for daily conversation"
+                $ref: '#/components/schemas/ApiResponseDeck'
+              example:
+                code: 200
+                message: "Success"
+                result:
+                  deckId: "550e8400-e29b-41d4-a716-446655440000"
+                  deckName: "English Vocabulary"
+                  description: "Basic English words for daily conversation"
+                  createdAt: "2026-05-08T10:30:00"
+                  lastUpdate: "2026-05-08T12:45:00"
+                  flashcards: []
         '404':
-          description: Invalid user ID
+          description: User not found
           content:
             text/plain:
               schema:
                 type: string
-                example: "Invalid UUID or user does not exist"
+                example: "User not found"
 
   /card/new:
     post:
@@ -355,93 +308,26 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-
-                  code:
-                    type: integer
-                    example: 200
-
-                  message:
-                    type: string
-                    example: success
-
-                  result:
-                    type: object
-                    properties:
-                      deckId:
-                        type: string
-                        example: "550e8400-e29b-41d4-a716-446655440000"
-
-                      word:
-                        type: string
-                        example: "hello"
-
-                      translation:
-                        type: string
-                        example: "xin chào"
-
-                      definition:
-                        type: string
-                        example: "A greeting used when meeting someone"
-        '400':
-          description: Invalid deck ID
+                $ref: '#/components/schemas/ApiResponseFlashcard'
+              example:
+                code: 200
+                message: "Success"
+                result:
+                  flashcardId: "660e8400-e29b-41d4-a716-446655440000"
+                  word: "hello"
+                  translation: "xin chào"
+                  definition: "A greeting used when meeting someone"
+                  flipCount: 0
+                  createdAt: "2026-05-08T10:30:00"
+                  lastUpdate: "2026-05-08T12:45:00"
+        '404':
+          description: Deck not found
           content:
             text/plain:
               schema:
                 type: string
-                example: "Invalid UUID for deck doesn't exist."
-
-  # /card/flip:
-  #   patch:
-  #     tags: [Card]
-  #     summary: Update flip count for multiple cards
-  #     description: Batch update flip count of flashcards.
-
-  #     requestBody:
-  #       required: true
-  #       content:
-  #         application/json:
-  #           schema:
-  #             type: array
-  #             items:
-  #               $ref: '#/components/schemas/CardFlipUpdateRequest'
-
-  #           example:
-  #             - cardId: "770e8400-e29b-41d4-a716-446655440000"
-  #               flipCount: 3
-  #             - cardId: "880e8400-e29b-41d4-a716-446655440000"
-  #               flipCount: 5
-
-  #     responses:
-  #       '200':
-  #         description: Flip count updated successfully
-  #         content:
-  #           application/json:
-  #             schema:
-  #               type: object
-  #               properties:
-  #                 code:
-  #                   type: integer
-  #                   example: 200
-
-  #                 message:
-  #                   type: string
-  #                   example: Success
-
-  #                 result:
-  #                   type: array
-  #                   items:
-  #                     $ref: '#/components/schemas/CardFlipUpdateResponse'
-  #                   example:
-  #                     - "deckId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-  #                     "cardId": "770e8400-e29b-41d4-a716-446655440000"
-  #                     "flipCount": 3
-
-  #                     - "deckId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-  #                     "cardId": "880e8400-e29b-41d4-a716-446655440000"
-  #                     "flipCount": 5
-  /card/flip:
+                example: "Deck not found"
+  /card/update-flip-count:
     patch:
       tags: [Card]
       summary: Update flip count for multiple cards
@@ -468,24 +354,11 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 200
-
-                  message:
-                    type: string
-                    example: Success
-
-                  result:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CardFlipUpdateResponse'
+                $ref: '#/components/schemas/ApiResponseCardFlipUpdateList'
 
               example:
                 code: 200
-                message: Success
+                message: "Success"
                 result:
                   - deckId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
                     cardId: "770e8400-e29b-41d4-a716-446655440000"
@@ -494,51 +367,19 @@ paths:
                   - deckId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
                     cardId: "880e8400-e29b-41d4-a716-446655440000"
                     flipCount: 5
+        '404':
+          description: Card not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Card not found"
 
 
 
 
 
   /scan:
-    #    post:
-    #      tags: [Scan]
-    #      summary: Scan image and generate flashcard candidates
-    #      description: |
-    #        Uploads an image for OCR processing. The backend performs OCR using Tesseract4J, extracts English words, looks them up in the bundled  English-Vietnamese dictionary, and returns flashcard candidates for user review.
-    #      requestBody:
-    #        required: true
-    #        content:
-    #          multipart/form-data:
-    #            schema:
-    #              type: object
-    #              properties:
-    #                image:
-    #                  type: string
-    #                  format: binary
-    #                  description: Image file to scan (JPEG/PNG)
-    #              required: [image]
-    #      responses:
-    #        '200':
-    #          description: OCR and dictionary lookup successful
-    #          content:
-    #            application/json:
-    #              schema:
-    #                $ref: '#/components/schemas/CardCandidateResponse'
-    #              examples:
-    #                success:
-    #                  summary: Successful scan with word candidates
-    #                  value:
-    #                    data:
-    #                      scanId: "770e8400-e29b-41d4-a716-446655440000"
-    #                      words:
-    #                        - word: "hello"
-    #                          translation: "xin chào"
-    #                          definition: "A greeting used when meeting someone"
-    #                        - word: "world"
-    #                          translation: "thế giới"
-    #                          definition: "The earth and all the people on it"
-    #                    error: null
-    #                    status: 200
     post:
       tags: [ Scan ]
       summary: Scan image and extract card candidates
@@ -564,43 +405,37 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-
-                  code:
-                    type: integer
-                    example: 200
-
-                  message:
-                    type: string
-                    example: Success
-
-                  result:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CardCandidateResponse'
+                $ref: '#/components/schemas/ApiResponseCardCandidateList'
+              example:
+                code: 200
+                message: "Success"
+                result:
+                  - word: "hello"
+                    translation:
+                      - "xin chào"
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Scan failed
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Scan failed"
   /lookup:
     get:
       tags: [ Scan ]
       summary: Look up the word in the dictionary
       description: User look up the word in the dictionary
 
-
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserLoginRequest'
-            examples:
-              valid:
-                summary: Existed word
-                value:
-                  word: "hello"
+      parameters:
+        - name: word
+          in: query
+          required: true
+          description: Word to look up in the dictionary
+          schema:
+            type: string
+            example: "hello"
 
       responses:
         '200':
@@ -608,35 +443,22 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-
-                  code:
-                    type: integer
-                    example: 200
-
-                  message:
-                    type: string
-                    example: Success
-
-                  result:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                      - "xin chào"
+                $ref: '#/components/schemas/ApiResponseStringList'
+              example:
+                code: 200
+                message: "Success"
+                result:
+                  - "xin chào"
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
 
 components:
   securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: user_id
-      description: HTTP-only cookie containing the user's UUID
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token returned by the login endpoint
 
   schemas:
     UserCreationRequest:
@@ -655,6 +477,203 @@ components:
           format: password
           example: "securePassword123"
       description: Request body for user registration
+
+    AuthenticationRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: "testuser"
+        password:
+          type: string
+          format: password
+          example: "securePassword123"
+      description: Request body for user login
+
+    AuthenticationResponse:
+      type: object
+      required: [jwtToken, isAuthenticated, username]
+      properties:
+        jwtToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiJ9..."
+        isAuthenticated:
+          type: boolean
+          example: true
+        username:
+          type: string
+          example: "testuser"
+      description: Authentication result returned after a successful login
+
+    IntrospectRequest:
+      type: object
+      required: [jwtToken]
+      properties:
+        jwtToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiJ9..."
+      description: Request body for JWT token introspection
+
+    IntrospectResponse:
+      type: object
+      required: [isValid]
+      properties:
+        isValid:
+          type: boolean
+          example: true
+      description: JWT token validation result
+
+    ApiResponseUser:
+      type: object
+      required: [code, message, result]
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+        result:
+          $ref: '#/components/schemas/User'
+      description: Standard API response containing a user
+
+    ApiResponseAuthentication:
+      type: object
+      required: [code, message, result]
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+        result:
+          $ref: '#/components/schemas/AuthenticationResponse'
+      description: Standard API response containing authentication data
+
+    ApiResponseIntrospect:
+      type: object
+      required: [code, message, result]
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+        result:
+          $ref: '#/components/schemas/IntrospectResponse'
+      description: Standard API response containing token introspection data
+
+    ApiResponseDeckList:
+      type: object
+      required: [code, message, result]
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/Deck'
+      description: Standard API response containing a list of decks
+
+    ApiResponseDeck:
+      type: object
+      required: [code, message, result]
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+        result:
+          $ref: '#/components/schemas/Deck'
+      description: Standard API response containing a deck
+
+    ApiResponseFlashcardList:
+      type: object
+      required: [code, message, result]
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/Flashcard'
+      description: Standard API response containing a list of flashcards
+
+    ApiResponseFlashcard:
+      type: object
+      required: [code, message, result]
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+        result:
+          $ref: '#/components/schemas/Flashcard'
+      description: Standard API response containing a flashcard
+
+    ApiResponseCardFlipUpdateList:
+      type: object
+      required: [code, message, result]
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/CardFlipUpdateResponse'
+      description: Standard API response containing updated card flip counts
+
+    ApiResponseCardCandidateList:
+      type: object
+      required: [code, message, result]
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+        result:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/CardCandidateResponse'
+      description: Standard API response containing OCR card candidates
+
+    ApiResponseStringList:
+      type: object
+      required: [code, message, result]
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+        result:
+          type: array
+          items:
+            type: string
+      description: Standard API response containing a list of strings
 
     UserLoginRequest:
       type: object
@@ -718,7 +737,7 @@ components:
         createdAt:
           type: string
           format: date-time
-          example: "2026-05-08T10:30:00.00Z"
+          example: "2026-05-08T10:30:00"
       description: User entity (password hash is never exposed in API responses)
 
     Deck:
@@ -738,11 +757,11 @@ components:
         createdAt:
           type: string
           format: date-time
-          example: "2026-05-08T10:30:00.00Z"
+          example: "2026-05-08T10:30:00"
         lastUpdate:
           type: string
           format: date-time
-          example: "2026-05-08T12:45:00.00Z"
+          example: "2026-05-08T12:45:00"
         flashcards:
           type: array
           items:
@@ -766,14 +785,17 @@ components:
         definition:
           type: string
           example: "A greeting used when meeting someone"
+        flipCount:
+          type: integer
+          example: 0
         createdAt:
           type: string
           format: date-time
-          example: "2026-05-08T10:30:00.00Z"
+          example: "2026-05-08T10:30:00"
         lastUpdate:
           type: string
           format: date-time
-          example: "2026-05-08T12:45:00.00Z"
+          example: "2026-05-08T12:45:00"
       description: Flashcard entity representing a single vocabulary card
 
     FlashcardCandidateDto:
@@ -793,13 +815,6 @@ components:
     CardCandidateResponse:
       type: object
       properties:
-        #        data:
-        #          type: object
-        #          properties:
-        #            scanId:
-        #              type: string
-        #              format: uuid
-        #              example: "770e8400-e29b-41d4-a716-446655440000"
         word:
           type: string
           example: hello
@@ -827,32 +842,37 @@ components:
       description: Error response wrapper
 
     CardFlipUpdateRequest:
-      # description: CardFlipUpdateRequest
       type: object
+      required: [cardId, flipCount]
       properties:
         cardId:
           type: string
+          format: uuid
           example: "770e8400-e29b-41d4-a716-446655440000"
 
         flipCount:
           type: integer
           example: 3
+      description: Request body item for updating a flashcard flip count
 
     CardFlipUpdateResponse:
-      # description: CardFlipUpdateRequest
       type: object
+      required: [deckId, cardId, flipCount]
       properties:
         deckId:
           type: string
           format: uuid
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
 
         cardId:
           type: string
           format: uuid
+          example: "770e8400-e29b-41d4-a716-446655440000"
 
         flipCount:
           type: integer
           example: 3
+      description: Updated flip count for a flashcard
 
   responses:
     BadRequest:
@@ -889,5 +909,3 @@ components:
             data: null
             error: "An unexpected error occurred"
             status: 500
-
-
