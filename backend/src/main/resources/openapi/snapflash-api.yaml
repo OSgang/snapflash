@@ -448,15 +448,6 @@ paths:
       tags: [Card]
       summary: Get learning journey
       description: Returns the authenticated user's cards grouped into mastered and learning lists.
-      parameters:
-        - name: deckId
-          in: query
-          required: false
-          description: Optional deck UUID to limit the learning journey to one deck
-          schema:
-            type: string
-            format: uuid
-            example: "550e8400-e29b-41d4-a716-446655440000"
       responses:
         '200':
           description: Learning journey retrieved successfully
@@ -504,14 +495,6 @@ paths:
             minimum: 1
             default: 10
             example: 10
-        - name: deckId
-          in: query
-          required: false
-          description: Optional deck UUID to limit results to one deck
-          schema:
-            type: string
-            format: uuid
-            example: "550e8400-e29b-41d4-a716-446655440000"
       responses:
         '200':
           description: Toughest words retrieved successfully
