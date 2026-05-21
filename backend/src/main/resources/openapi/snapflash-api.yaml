@@ -168,6 +168,70 @@ paths:
                 type: string
                 example: "Invalid JWT token"
 
+  /user/logout:
+    post:
+      tags: [User]
+      summary: Logout user
+      description: Client sends the JWT Token by calling this API, the BE will invalidates the current JWT token.
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseString'
+              example:
+                code: 200
+                message: "Success"
+                result: "Logout successful"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /user/change-password:
+    patch:
+      tags: [User]
+      summary: Change password
+      description: Changes the authenticated user's password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+            examples:
+              valid:
+                summary: Valid password change request
+                value:
+                  currentPassword: "oldPassword123"
+                  newPassword: "newSecurePassword456"
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseString'
+              example:
+                code: 200
+                message: "Success"
+                result: "Password changed successfully"
+        '400':
+          description: Wrong current password or invalid new password
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Wrong password"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: User not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "User not found"
+
   /user/greet:
     get:
       tags: [User]
@@ -379,6 +443,98 @@ paths:
 
 
 
+  /card/learning-journey:
+    get:
+      tags: [Card]
+      summary: Get learning journey
+      description: Returns the authenticated user's cards grouped into mastered and learning lists.
+      parameters:
+        - name: deckId
+          in: query
+          required: false
+          description: Optional deck UUID to limit the learning journey to one deck
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Learning journey retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseLearningJourney'
+              example:
+                code: 200
+                message: "Success"
+                result:
+                  mastered:
+                    - flashcardId: "660e8400-e29b-41d4-a716-446655440000"
+                      word: "hello"
+                      translation: "xin chào"
+                      definition: "A greeting used when meeting someone"
+                      flipCount: 12
+                      createdAt: "2026-05-08T10:30:00"
+                      lastUpdate: "2026-05-08T12:45:00"
+                  learning:
+                    - flashcardId: "770e8400-e29b-41d4-a716-446655440000"
+                      word: "world"
+                      translation: "thế giới"
+                      definition: "The earth and all the people on it"
+                      flipCount: 2
+                      createdAt: "2026-05-08T10:30:00"
+                      lastUpdate: "2026-05-08T12:45:00"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /card/toughest-words:
+    get:
+      tags: [Card]
+      summary: Get toughest words
+      description: Returns cards with the highest flip count for the authenticated user.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of cards to return
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+            example: 10
+        - name: deckId
+          in: query
+          required: false
+          description: Optional deck UUID to limit results to one deck
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Toughest words retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseFlashcardList'
+              example:
+                code: 200
+                message: "Success"
+                result:
+                  - flashcardId: "660e8400-e29b-41d4-a716-446655440000"
+                    word: "hello"
+                    translation: "xin chào"
+                    definition: "A greeting used when meeting someone"
+                    flipCount: 25
+                    createdAt: "2026-05-08T10:30:00"
+                    lastUpdate: "2026-05-08T12:45:00"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   /scan:
     post:
       tags: [ Scan ]
@@ -524,6 +680,36 @@ components:
           example: true
       description: JWT token validation result
 
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+          format: password
+          example: "oldPassword123"
+        newPassword:
+          type: string
+          format: password
+          example: "newSecurePassword456"
+      description: Request body for changing the authenticated user's password
+
+    LearningJourneyResponse:
+      type: object
+      required: [mastered, learning]
+      properties:
+        mastered:
+          type: array
+          items:
+            $ref: '#/components/schemas/Flashcard'
+          description: Cards considered mastered according to the learning rule
+        learning:
+          type: array
+          items:
+            $ref: '#/components/schemas/Flashcard'
+          description: Cards still being learned according to the learning rule
+      description: Cards grouped by learning status
+
     ApiResponseUser:
       type: object
       required: [code, message, result]
@@ -565,6 +751,21 @@ components:
         result:
           $ref: '#/components/schemas/IntrospectResponse'
       description: Standard API response containing token introspection data
+
+    ApiResponseString:
+      type: object
+      required: [code, message, result]
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+        result:
+          type: string
+          example: "Operation successful"
+      description: Standard API response containing a string result
 
     ApiResponseDeckList:
       type: object
@@ -625,6 +826,20 @@ components:
         result:
           $ref: '#/components/schemas/Flashcard'
       description: Standard API response containing a flashcard
+
+    ApiResponseLearningJourney:
+      type: object
+      required: [code, message, result]
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+        result:
+          $ref: '#/components/schemas/LearningJourneyResponse'
+      description: Standard API response containing learning journey data
 
     ApiResponseCardFlipUpdateList:
       type: object
