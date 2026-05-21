@@ -13,6 +13,8 @@ interface DeckRepository : JpaRepository<Deck, UUID> {
     // Fetch all decks belonging to a specific user using the user's UUID
     fun findByUserUserId(userId: UUID): List<Deck>
 
+    fun findByUserUserIdOrderByLastUpdateDesc(userId: UUID): List<Deck>
+
     // Alternatively, fetch passing the whole User entity
     fun findByUser(user: User): List<Deck>
 }

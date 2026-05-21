@@ -87,6 +87,6 @@ class CardService(
     }
 
     fun findAllDecksByUserId(userId: UUID): List<Deck> {
-        return deckRepository.findByUserUserId(userId)
+        return deckRepository.findByUserUserIdOrderByLastUpdateDesc(userId)
     }
 }
