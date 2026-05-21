@@ -464,7 +464,7 @@ paths:
                       word: "hello"
                       translation: "xin chào"
                       definition: "A greeting used when meeting someone"
-                      flipCount: 12
+                      flipCount: 0
                       createdAt: "2026-05-08T10:30:00"
                       lastUpdate: "2026-05-08T12:45:00"
                   learning:
@@ -472,7 +472,7 @@ paths:
                       word: "world"
                       translation: "thế giới"
                       definition: "The earth and all the people on it"
-                      flipCount: 2
+                      flipCount: 8
                       createdAt: "2026-05-08T10:30:00"
                       lastUpdate: "2026-05-08T12:45:00"
         '400':
