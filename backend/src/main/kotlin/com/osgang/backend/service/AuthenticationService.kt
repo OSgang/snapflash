@@ -11,16 +11,20 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.osgang.backend.dto.request.AuthenticationRequest
 import com.osgang.backend.dto.request.IntrospectRequest
+import com.osgang.backend.dto.request.UserLogoutRequest
 import com.osgang.backend.dto.response.AuthenticationResponse
 import com.osgang.backend.dto.response.IntrospectResponse
+import com.osgang.backend.entity.InvalidToken
 import com.osgang.backend.exception.AppException
 import com.osgang.backend.exception.ErrorCode
+import com.osgang.backend.repository.InvalidTokenRepository
 import com.osgang.backend.repository.UserRepository
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import java.time.Instant
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.UUID
@@ -28,8 +32,58 @@ import java.util.UUID
 @Service
 class AuthenticationService (
     val userRepository: UserRepository,
+    private val invalidTokenRepository: InvalidTokenRepository,
     @Value("\${JWT_SIGNER_KEY}") val SIGNER_KEY: String
 ) {
+
+    fun logout(request: UserLogoutRequest): AuthenticationResponse{
+//        val user = userRepository.findByUsername(request.username)
+//        user?: throw AppException(ErrorCode.USER__USER_NOT_FOUND)
+        val token = request.token
+
+        val jwt = SignedJWT.parse(token)
+
+        val verifier = MACVerifier(SIGNER_KEY.toByteArray())
+
+        if (!jwt.verify(verifier)){
+            throw AppException(ErrorCode.JWT__INVALID_TOKEN)
+        }
+
+        val userName = jwt.jwtClaimsSet.subject
+
+
+        val expirationtime = jwt.jwtClaimsSet.expirationTime
+
+//        if(expirationtime.before(Date()) ){
+//            throw AppException(ErrorCode.JWT__INVALID_TOKEN)
+//        }
+
+        if(invalidTokenRepository.existsByJwtToken(token)){
+            return AuthenticationResponse(
+                "",
+                isAuthenticated = false,
+                username = userName
+            )
+        }
+
+        invalidTokenRepository.save(
+            InvalidToken(
+                jwtToken = token,
+                expiryTime = expirationtime.toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDateTime()
+            )
+        )
+
+        return AuthenticationResponse(
+            "",
+            isAuthenticated = false,
+            username = userName
+        )
+    }
+
+
+
     fun introspect(request: IntrospectRequest): IntrospectResponse {
         val jwtToken = request.jwtToken
 

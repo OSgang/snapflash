@@ -4,6 +4,7 @@ import com.osgang.backend.dto.request.AuthenticationRequest
 import com.osgang.backend.dto.request.IntrospectRequest
 import com.osgang.backend.dto.request.UserCreationRequest
 import com.osgang.backend.dto.request.UserLoginRequest
+import com.osgang.backend.dto.request.UserLogoutRequest
 import com.osgang.backend.dto.response.ApiResponse
 import com.osgang.backend.dto.response.AuthenticationResponse
 import com.osgang.backend.dto.response.IntrospectResponse
@@ -20,6 +21,13 @@ class UserController(
     private val userService: UserService,
     private val authenticationService: AuthenticationService
 ) {
+
+    @PostMapping("/logout")
+    fun logoutUser(@RequestBody request: UserLogoutRequest): ApiResponse<String>{
+        authenticationService.logout(request)
+        return ApiResponse(result = "Logout successful")
+    }
+
     @PostMapping("/register")
     fun registerUser(@RequestBody request: UserCreationRequest): ApiResponse<User> {
         return ApiResponse(result = userService.userCreationRequest(request))
@@ -27,6 +35,8 @@ class UserController(
 
     @PostMapping("/login")
     fun loginUser(@RequestBody request: AuthenticationRequest): ApiResponse<AuthenticationResponse> {
+//        println("API LOGIN")
+
         return ApiResponse(
             result = authenticationService.authenticate(request)
         )
@@ -41,6 +51,7 @@ class UserController(
 
     @GetMapping("/greet")
     fun greet(): String {
+//        println("API GREET")
         return "♪♪♪ My pussy tastes like Pepsi Cola\n" +
                 "My eyes are wide like cherry pies\n" +
                 "I gots a taste for men who are older\n" +
