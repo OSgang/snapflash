@@ -50,4 +50,15 @@ class CardController(
 
         return ApiResponse(result = cardService.getLearningJourney(userId))
     }
+
+    @GetMapping("/toughest-words")
+    fun getToughestWords(
+        @RequestHeader("Authorization") authorizationHeader: String,
+        @RequestParam(defaultValue = "10") limit: Int
+    ): ApiResponse<List<Flashcard>> {
+        val jwtToken = authorizationHeader.replace("Bearer ", "")
+        val userId = UUID.fromString(authenticationService.extractUserId(jwtToken))
+
+        return ApiResponse(result = cardService.getToughestWords(userId, limit))
+    }
 }

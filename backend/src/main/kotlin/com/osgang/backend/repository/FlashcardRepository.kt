@@ -2,6 +2,7 @@ package com.osgang.backend.repository
 
 import com.osgang.backend.entity.Deck
 import com.osgang.backend.entity.Flashcard
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.*
@@ -14,6 +15,11 @@ interface FlashcardRepository : JpaRepository<Flashcard, UUID> {
 
     // Fetch all flashcards that belong to any deck owned by a specific user.
     fun findByDeckUserUserId(userId: UUID): List<Flashcard>
+
+    fun findByDeckUserUserIdOrderByFlipCountDescLastUpdateDesc(
+        userId: UUID,
+        pageable: Pageable
+    ): List<Flashcard>
 
     fun findByFlashcardId(flashcardId: UUID): Flashcard
 

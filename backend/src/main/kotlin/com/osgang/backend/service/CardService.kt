@@ -10,6 +10,7 @@ import com.osgang.backend.exception.ErrorCode
 import com.osgang.backend.repository.DeckRepository
 import com.osgang.backend.repository.FlashcardRepository
 import com.osgang.backend.repository.UserRepository
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.util.*
@@ -40,6 +41,17 @@ class CardService(
         return LearningJourneyResponse(
             mastered = mastered,
             learning = learning
+        )
+    }
+
+    fun getToughestWords(userId: UUID, limit: Int): List<Flashcard> {
+        if (limit < 1) {
+            throw AppException(ErrorCode.CARD__INVALID_LIMIT)
+        }
+
+        return flashcardRepository.findByDeckUserUserIdOrderByFlipCountDescLastUpdateDesc(
+            userId,
+            PageRequest.of(0, limit)
         )
     }
 
