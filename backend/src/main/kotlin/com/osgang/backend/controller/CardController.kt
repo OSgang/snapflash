@@ -4,6 +4,7 @@ import com.osgang.backend.dto.request.CardCreationRequest
 import com.osgang.backend.dto.request.CardFlipUpdateRequest
 import com.osgang.backend.dto.response.ApiResponse
 import com.osgang.backend.dto.response.CardFlipUpdateResponse
+import com.osgang.backend.dto.response.LearningJourneyResponse
 import com.osgang.backend.entity.Flashcard
 import com.osgang.backend.exception.AppException
 import com.osgang.backend.exception.ErrorCode
@@ -38,5 +39,15 @@ class CardController(
         }
 
         return ApiResponse(result = list)
+    }
+
+    @GetMapping("/learning-journey")
+    fun getLearningJourney(
+        @RequestHeader("Authorization") authorizationHeader: String
+    ): ApiResponse<LearningJourneyResponse> {
+        val jwtToken = authorizationHeader.replace("Bearer ", "")
+        val userId = UUID.fromString(authenticationService.extractUserId(jwtToken))
+
+        return ApiResponse(result = cardService.getLearningJourney(userId))
     }
 }

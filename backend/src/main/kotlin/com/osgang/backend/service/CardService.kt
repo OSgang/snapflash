@@ -2,6 +2,7 @@ package com.osgang.backend.service
 
 import com.osgang.backend.dto.request.CardCreationRequest
 import com.osgang.backend.dto.request.DeckCreationRequest
+import com.osgang.backend.dto.response.LearningJourneyResponse
 import com.osgang.backend.entity.Deck
 import com.osgang.backend.entity.Flashcard
 import com.osgang.backend.exception.AppException
@@ -29,15 +30,17 @@ class CardService(
     }
 
     fun findAllCardsByUserId(userId: UUID): List<Flashcard> {
+        return flashcardRepository.findByDeckUserUserId(userId)
+    }
 
-        val decks = this.findAllDecksByUserId(userId)
-        val cards: MutableList<Flashcard> = mutableListOf()
+    fun getLearningJourney(userId: UUID): LearningJourneyResponse {
+        val cards = findAllCardsByUserId(userId)
+        val (mastered, learning) = cards.partition { it.flipCount <= 2 }
 
-        for (deck in decks) {
-            cards += this.findAllCardsByUserId(requireNotNull(deck.deckId))
-        }
-
-        return cards
+        return LearningJourneyResponse(
+            mastered = mastered,
+            learning = learning
+        )
     }
 
     fun saveCard(request: CardCreationRequest): Flashcard {
