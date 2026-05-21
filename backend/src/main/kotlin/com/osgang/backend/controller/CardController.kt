@@ -28,7 +28,7 @@ class CardController(
         return ApiResponse(result = cardService.saveCard(request))
     }
 
-    @PatchMapping("/flip")
+    @PatchMapping("/update-flip-count")
     fun updateFlipCount(@RequestBody req: List<CardFlipUpdateRequest>): ApiResponse<List<CardFlipUpdateResponse>> {
         val list = mutableListOf<CardFlipUpdateResponse>()
 

@@ -65,9 +65,10 @@ class CardService(
     }
 
     fun updateFlipCount(cardId: UUID, newFlipCount: Int): Flashcard {
-        val card = flashcardRepository.findByFlashcardId(cardId)
+        val card = flashcardRepository.findByIdOrNull(cardId)
+            ?: throw AppException(ErrorCode.CARD__CARD_NOT_FOUND)
         card.flipCount = newFlipCount
-        return saveCard(card)
+        return flashcardRepository.save(card)
     }
 
     fun findAllDecksByUserId(userId: UUID): List<Deck> {
