@@ -56,6 +56,21 @@ jobs:
           spring.servlet.multipart.max-request-size=10MB
           EOF
 
+      - name: Validate backend CI secrets
+        env:
+          NEON_TEST_DATASOURCE_URL: ${{ secrets.NEON_TEST_DATASOURCE_URL }}
+          NEON_TEST_FLYWAY_URL: ${{ secrets.NEON_TEST_FLYWAY_URL }}
+          NEON_TEST_USERNAME: ${{ secrets.NEON_TEST_USERNAME }}
+          NEON_TEST_PASSWORD: ${{ secrets.NEON_TEST_PASSWORD }}
+          JWT_SIGNER_KEY: ${{ secrets.JWT_SIGNER_KEY }}
+        run: |
+          test -n "$NEON_TEST_DATASOURCE_URL"
+          test -n "$NEON_TEST_FLYWAY_URL"
+          test -n "$NEON_TEST_USERNAME"
+          test -n "$NEON_TEST_PASSWORD"
+          test -n "$JWT_SIGNER_KEY"
+          test "${#JWT_SIGNER_KEY}" -ge 32
+
       - name: Run backend tests with coverage
         working-directory: backend
         env:
