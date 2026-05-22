@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, Dimensions, Image, TouchableOpacity, useColorScheme } from "react-native";
+import { View, Text, StyleSheet, Dimensions, Image, TouchableOpacity, useColorScheme, Alert } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -8,18 +8,48 @@ import { Colors, SIZES } from "@/constants/theme";
 import AuthInput from "@/components/AuthInput";
 import AuthButton from "@/components/AuthButton";
 
+// Import hàm loginUser từ file API đã cấu hình
+import { loginUser } from "@/services/api";
+
 const { width, height } = Dimensions.get("window");
 
 export default function LoginScreen() {
     const router = useRouter();
     const currentTheme = Colors[useColorScheme() ?? "light"];
 
-    const [email, setEmail] = useState("");
+    // Đổi 'email' thành 'username' cho khớp với backend
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSignIn = () => {
-        console.log("Đăng nhập với:", email);
-        router.replace("/(tabs)");
+    // Cập nhật hàm handleSignIn để gọi API
+    const handleSignIn = async () => {
+        // Gọt sạch khoảng trắng thừa ở 2 đầu
+        const cleanUsername = username.trim();
+        const cleanPassword = password.trim();
+
+        if (!cleanUsername || !cleanPassword) {
+            Alert.alert("Lỗi", "Vui lòng nhập đầy đủ Username và Password");
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            
+            // Log ra xem chính xác mình đang gửi cái gì lên
+            console.log("Chuẩn bị gửi lên server:", `"${cleanUsername}"`, `"${cleanPassword}"`);
+
+            // Nhớ truyền cleanUsername và cleanPassword vào đây nhé!
+            const response = await loginUser(cleanUsername, cleanPassword);
+            console.log("Đăng nhập thành công:", response);
+            
+            router.replace("/(tabs)");
+        } catch (error: any) {
+            console.error("Lỗi đăng nhập:", error);
+            Alert.alert("Đăng nhập thất bại", String(error));
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -48,7 +78,12 @@ export default function LoginScreen() {
                 </View>
 
                 <View style={styles.formContainer}>
-                    <AuthInput label="Email" placeholder="Enter your email..." value={email} onChangeText={setEmail} />
+                    <AuthInput 
+                        label="Username" 
+                        placeholder="Enter your username..." 
+                        value={username} 
+                        onChangeText={setUsername} 
+                    />
 
                     <AuthInput
                         label="Password"
@@ -71,7 +106,12 @@ export default function LoginScreen() {
                             style={{ flex: 1, marginRight: 15 }}
                             onPress={() => router.push("/signup")}
                         />
-                        <AuthButton title="Sign in" variant="primary" style={{ flex: 1 }} onPress={handleSignIn} />
+                        <AuthButton 
+                            title={isLoading ? "Loading..." : "Sign in"} 
+                            variant="primary" 
+                            style={{ flex: 1 }} 
+                            onPress={handleSignIn} 
+                        />
                     </View>
                 </View>
             </KeyboardAwareScrollView>
