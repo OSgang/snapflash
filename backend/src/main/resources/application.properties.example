@@ -15,3 +15,6 @@ tesseract.datapath=/usr/share/tesseract-ocr/5/tessdata/
 # Increase the maximum capacity of file sending
 spring.servlet.multipart.max-file-size=10MB
 spring.servlet.multipart.max-request-size=10MB
+
+# Set up the JWT Signer key
+JWT_SIGNER_KEY=xxx
