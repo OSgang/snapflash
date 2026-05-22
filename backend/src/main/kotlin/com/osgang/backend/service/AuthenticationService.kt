@@ -35,7 +35,7 @@ class AuthenticationService (
     @Value("\${JWT_SIGNER_KEY}") val SIGNER_KEY: String
 ) {
 
-    fun logout(jwttoken: String): AuthenticationResponse{
+    fun logout(jwttoken: String) {
         val jwt = SignedJWT.parse(jwttoken)
 
         val verifier = MACVerifier(SIGNER_KEY.toByteArray())
@@ -49,14 +49,6 @@ class AuthenticationService (
 
         val expirationtime = jwt.jwtClaimsSet.expirationTime
 
-        if(invalidTokenRepository.existsByJwtToken(jwttoken)){
-            return AuthenticationResponse(
-                "",
-                isAuthenticated = false,
-                username = userName
-            )
-        }
-
         invalidTokenRepository.save(
             InvalidToken(
                 jwtToken = jwttoken,
@@ -64,12 +56,6 @@ class AuthenticationService (
                     .atZone(ZoneId.systemDefault())
                     .toLocalDateTime()
             )
-        )
-
-        return AuthenticationResponse(
-            "",
-            isAuthenticated = false,
-            username = userName
         )
     }
 
