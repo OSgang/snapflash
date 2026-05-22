@@ -3,6 +3,7 @@ package com.osgang.backend.service
 
 import com.osgang.backend.dto.request.UserCreationRequest
 import com.osgang.backend.dto.request.UserLoginRequest
+import com.osgang.backend.dto.request.ChangePasswordRequest
 import com.osgang.backend.entity.User
 import com.osgang.backend.exception.ErrorCode
 import com.osgang.backend.dto.response.ApiResponse
@@ -39,6 +40,20 @@ class UserService(
 
     fun saveUser(user: User): User {
         return userRepository.save(user)
+    }
+
+    fun changePassword(userId: UUID, request: ChangePasswordRequest): String {
+        val user = userRepository.findByUserId(userId)
+        user ?: throw AppException(ErrorCode.USER__USER_NOT_FOUND)
+
+        if (!passwordEncoder.matches(request.currentPassword, user.passwordHash)) {
+            throw AppException(ErrorCode.USER__WRONG_PASSWORD)
+        }
+
+        user.passwordHash = requireNotNull(passwordEncoder.encode(request.newPassword))
+        userRepository.save(user)
+
+        return "Password changed successfully"
     }
 
     fun checkById(id: UUID): Boolean {

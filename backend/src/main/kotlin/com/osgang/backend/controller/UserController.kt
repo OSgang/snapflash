@@ -1,6 +1,7 @@
 package com.osgang.backend.controller
 
 import com.osgang.backend.dto.request.AuthenticationRequest
+import com.osgang.backend.dto.request.ChangePasswordRequest
 import com.osgang.backend.dto.request.IntrospectRequest
 import com.osgang.backend.dto.request.UserCreationRequest
 import com.osgang.backend.dto.response.ApiResponse
@@ -29,6 +30,17 @@ class UserController(
         return ApiResponse(result = "Logout successful")
     }
 
+    @PatchMapping("/change-password")
+    fun changePassword(
+        @RequestHeader("Authorization") authorizationHeader: String,
+        @RequestBody request: ChangePasswordRequest
+    ): ApiResponse<String> {
+        val jwtToken = authorizationHeader.replace("Bearer ", "")
+        val userId = UUID.fromString(authenticationService.extractUserId(jwtToken))
+
+        return ApiResponse(result = userService.changePassword(userId, request))
+    }
+
     @PostMapping("/register")
     fun registerUser(@RequestBody request: UserCreationRequest): ApiResponse<User> {
         return ApiResponse(result = userService.userCreationRequest(request))
@@ -50,9 +62,13 @@ class UserController(
 
     @GetMapping("/greet")
     fun greet(): String {
-        return "♪♪♪ My pussy tastes like Pepsi Cola\n" +
-                "My eyes are wide like cherry pies\n" +
-                "I gots a taste for men who are older\n" +
-                "It's always been so it's no surprise ♪♪♪"
+        return "♪♪♪ She said she didn't have no man\n" +
+                "Raised the kids the very best she can (She was lovin' me)\n" +
+                "She told me she was all alone\n" +
+                "Said at home, she didn't have no phone (She was wantin' me)\n" +
+                "She said just to give her a page\n" +
+                "Fifty-nine was the code she gave (She was lovin' me)\n" +
+                "She'd lied to you, lied to me\n" +
+                "'Cause she was lovin' me, lovin' me, yeah ♪♪♪"
     }
 }
