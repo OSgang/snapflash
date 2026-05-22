@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Text, StyleSheet, useColorScheme } from "react-native";
+import { useState, useEffect } from "react";
+import { Text, StyleSheet, useColorScheme, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Colors } from "@/constants/theme";
 import AuthInput from "@/components/AuthInput";
@@ -13,31 +13,38 @@ export default function ForgotPasswordScreen() {
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
-    const handleResetPassword = () => {
-        console.log("Khôi phục mật khẩu cho:", email);
-        router.back();
-    };
+    useEffect(() => {
+        Alert.alert(
+            "Notice",
+            "The Forgot Password feature is currently under development!",
+            [
+                { text: "OK", onPress: () => router.replace("/login") }
+            ]
+        );
+    }, []);
+
+    const handleResetPassword = () => {};
 
     return (
         <AuthLayout title="Forgot password ?">
-            <AuthInput label="Email" placeholder="Enter your email..." value={email} onChangeText={setEmail} />
+            <AuthInput label="Email" placeholder="Enter your email" value={email} onChangeText={setEmail} />
             <AuthInput
                 label="New Password"
-                placeholder="Enter new password..."
+                placeholder="Enter new password"
                 isPassword
                 value={newPassword}
                 onChangeText={setNewPassword}
             />
             <AuthInput
                 label="Re-enter New Password"
-                placeholder="Confirm new password..."
+                placeholder="Confirm new password"
                 isPassword
                 value={confirmNewPassword}
                 onChangeText={setConfirmNewPassword}
             />
 
             <Text style={[styles.disclaimer, { color: currentTheme.subText }]}>
-                By resetting password you agree to our{"\n"}
+                By resetting password you agreed to our{"\n"}
                 <Text style={{ fontWeight: "bold" }}>terms and conditions</Text>
             </Text>
             <AuthButton title="Reset password" onPress={handleResetPassword} style={styles.mainBtn} />
