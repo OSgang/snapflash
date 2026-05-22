@@ -7,16 +7,20 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.oauth2.jwt.BadJwtException
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.web.SecurityFilterChain
 import javax.crypto.spec.SecretKeySpec
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm
+import com.osgang.backend.repository.InvalidTokenRepository
+import java.util.UUID
 
 @Configuration
 @EnableWebSecurity
 class SecurityConfig (
-    @Value("\${JWT_SIGNER_KEY}") private val SIGNER_KEY: String
+    @Value("\${JWT_SIGNER_KEY}") private val SIGNER_KEY: String,
+    private val invalidTokenRepository: InvalidTokenRepository
 ) {
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
@@ -59,8 +63,24 @@ class SecurityConfig (
         val secretKey = SecretKeySpec(SIGNER_KEY.toByteArray(), "HmacSHA256")
 
         // Explicitly tell Spring to expect the HS256 algorithm
-        return NimbusJwtDecoder.withSecretKey(secretKey)
+        val nimbusJwtDecoder = NimbusJwtDecoder.withSecretKey(secretKey)
             .macAlgorithm(MacAlgorithm.HS256)
             .build()
+
+        return JwtDecoder { token ->
+            val jwt = nimbusJwtDecoder.decode(token)
+
+            try {
+                UUID.fromString(jwt.subject)
+            } catch (exception: RuntimeException) {
+                throw BadJwtException("JWT subject must be a valid UUID", exception)
+            }
+
+            if (invalidTokenRepository.existsByJwtToken(token)) {
+                throw BadJwtException("JWT token has been invalidated")
+            }
+
+            jwt
+        }
     }
 }

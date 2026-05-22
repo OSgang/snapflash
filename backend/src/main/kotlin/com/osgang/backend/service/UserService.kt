@@ -30,19 +30,7 @@ class UserService(
             throw AppException(ErrorCode.USER__EMAIL_EXISTED)
         }
 
-        // if (userRepository.existsByUsername(request.username)) {
-        //     return Response.Err(HttpStatus.CONFLICT, "A user with this username already exists.")
-        // }
-        // val ret = ApiResponse(result=user)
-
         return userRepository.save(user)
-        // return try {
-        //     // Response.Ok(userRepository.save(user))
-        //     ApiResponse.result
-        // } catch (e: AppException) {
-        //     // Response.Err(HttpStatus.INTERNAL_SERVER_ERROR, e.toString())
-        //     ApiResponse.(ErrorCode.USER__USER_NOT_FOUND)
-        // }
     }
 
     fun getUserById(id: UUID): User {

@@ -3,15 +3,12 @@ package com.osgang.backend.controller
 import com.osgang.backend.dto.request.AuthenticationRequest
 import com.osgang.backend.dto.request.IntrospectRequest
 import com.osgang.backend.dto.request.UserCreationRequest
-import com.osgang.backend.dto.request.UserLoginRequest
-import com.osgang.backend.dto.request.UserLogoutRequest
 import com.osgang.backend.dto.response.ApiResponse
 import com.osgang.backend.dto.response.AuthenticationResponse
 import com.osgang.backend.dto.response.IntrospectResponse
 import com.osgang.backend.entity.User
 import com.osgang.backend.service.AuthenticationService
 import com.osgang.backend.service.UserService
-import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -23,8 +20,12 @@ class UserController(
 ) {
 
     @PostMapping("/logout")
-    fun logoutUser(@RequestBody request: UserLogoutRequest): ApiResponse<String>{
-        authenticationService.logout(request)
+    fun logoutUser(
+        @RequestHeader("Authorization") authorizationHeader: String
+    ): ApiResponse<String>{
+        val jwtToken = authorizationHeader.replace("Bearer ", "")
+
+        authenticationService.logout(jwtToken)
         return ApiResponse(result = "Logout successful")
     }
 
@@ -35,8 +36,6 @@ class UserController(
 
     @PostMapping("/login")
     fun loginUser(@RequestBody request: AuthenticationRequest): ApiResponse<AuthenticationResponse> {
-//        println("API LOGIN")
-
         return ApiResponse(
             result = authenticationService.authenticate(request)
         )
@@ -51,7 +50,6 @@ class UserController(
 
     @GetMapping("/greet")
     fun greet(): String {
-//        println("API GREET")
         return "♪♪♪ My pussy tastes like Pepsi Cola\n" +
                 "My eyes are wide like cherry pies\n" +
                 "I gots a taste for men who are older\n" +

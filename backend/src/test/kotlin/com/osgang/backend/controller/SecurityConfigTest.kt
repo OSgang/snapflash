@@ -1,11 +1,21 @@
 package com.osgang.backend.controller
 
+import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.JWSHeader
+import com.nimbusds.jose.JWSObject
+import com.nimbusds.jose.Payload
+import com.nimbusds.jose.crypto.MACSigner
+import com.nimbusds.jwt.JWTClaimsSet
 import com.osgang.backend.dto.request.UserCreationRequest
 import com.osgang.backend.entity.User
 import com.osgang.backend.service.AuthenticationService
 import com.osgang.backend.service.UserService
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.util.Date
 import kotlin.test.Test
 import org.junit.jupiter.api.BeforeEach
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpHeaders
@@ -26,7 +36,8 @@ import org.springframework.web.context.WebApplicationContext
 class SecurityConfigTest @Autowired constructor(
     private val webApplicationContext: WebApplicationContext,
     private val userService: UserService,
-    private val authenticationService: AuthenticationService
+    private val authenticationService: AuthenticationService,
+    @Value("\${JWT_SIGNER_KEY}") private val signerKey: String
 ) {
     private lateinit var mockMvc: MockMvc
 
@@ -80,6 +91,17 @@ class SecurityConfigTest @Autowired constructor(
     }
 
     @Test
+    fun `protected endpoint rejects signed token with non uuid subject`() {
+        val token = generateTokenWithSubject("not-a-user-id")
+
+        mockMvc.perform(
+            get("/deck/all")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer $token")
+        )
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
     fun `lookup endpoint requires authentication`() {
         mockMvc.perform(get("/lookup").param("word", "a"))
             .andExpect(status().isUnauthorized)
@@ -108,4 +130,22 @@ class SecurityConfigTest @Autowired constructor(
 
     private fun bearerToken(user: User): String =
         "Bearer ${authenticationService.generateJWTToken(user.userId!!)}"
+
+    private fun generateTokenWithSubject(subject: String): String {
+        val claimsSet = JWTClaimsSet.Builder()
+            .subject(subject)
+            .issuer("osgang.com")
+            .issueTime(Date())
+            .expirationTime(Date(Instant.now().plus(4, ChronoUnit.HOURS).toEpochMilli()))
+            .build()
+
+        val jwsObject = JWSObject(
+            JWSHeader(JWSAlgorithm.HS256),
+            Payload(claimsSet.toJSONObject())
+        )
+
+        jwsObject.sign(MACSigner(signerKey.toByteArray()))
+
+        return jwsObject.serialize()
+    }
 }

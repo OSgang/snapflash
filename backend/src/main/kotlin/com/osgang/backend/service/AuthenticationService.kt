@@ -11,7 +11,6 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.osgang.backend.dto.request.AuthenticationRequest
 import com.osgang.backend.dto.request.IntrospectRequest
-import com.osgang.backend.dto.request.UserLogoutRequest
 import com.osgang.backend.dto.response.AuthenticationResponse
 import com.osgang.backend.dto.response.IntrospectResponse
 import com.osgang.backend.entity.InvalidToken
@@ -36,12 +35,8 @@ class AuthenticationService (
     @Value("\${JWT_SIGNER_KEY}") val SIGNER_KEY: String
 ) {
 
-    fun logout(request: UserLogoutRequest): AuthenticationResponse{
-//        val user = userRepository.findByUsername(request.username)
-//        user?: throw AppException(ErrorCode.USER__USER_NOT_FOUND)
-        val token = request.token
-
-        val jwt = SignedJWT.parse(token)
+    fun logout(jwttoken: String): AuthenticationResponse{
+        val jwt = SignedJWT.parse(jwttoken)
 
         val verifier = MACVerifier(SIGNER_KEY.toByteArray())
 
@@ -54,11 +49,7 @@ class AuthenticationService (
 
         val expirationtime = jwt.jwtClaimsSet.expirationTime
 
-//        if(expirationtime.before(Date()) ){
-//            throw AppException(ErrorCode.JWT__INVALID_TOKEN)
-//        }
-
-        if(invalidTokenRepository.existsByJwtToken(token)){
+        if(invalidTokenRepository.existsByJwtToken(jwttoken)){
             return AuthenticationResponse(
                 "",
                 isAuthenticated = false,
@@ -68,7 +59,7 @@ class AuthenticationService (
 
         invalidTokenRepository.save(
             InvalidToken(
-                jwtToken = token,
+                jwtToken = jwttoken,
                 expiryTime = expirationtime.toInstant()
                     .atZone(ZoneId.systemDefault())
                     .toLocalDateTime()
@@ -99,8 +90,10 @@ class AuthenticationService (
             throw AppException(ErrorCode.JWT__INVALID_TOKEN)
         }
 
+        val isInvalidated = invalidTokenRepository.existsByJwtToken(jwtToken)
+
         return IntrospectResponse(
-                isValid = isVerified && expirationTime.after(Date())
+                isValid = isVerified && expirationTime.after(Date()) && !isInvalidated
         )
     }
 
