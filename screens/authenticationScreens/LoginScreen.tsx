@@ -7,24 +7,18 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { Colors, SIZES } from "@/constants/theme";
 import AuthInput from "@/components/AuthInput";
 import AuthButton from "@/components/AuthButton";
-
-// Import hàm loginUser từ file API đã cấu hình
-import { loginUser } from "@/services/api";
+import { AuthService } from "@/services/AuthService";
 
 const { width, height } = Dimensions.get("window");
 
 export default function LoginScreen() {
     const router = useRouter();
     const currentTheme = Colors[useColorScheme() ?? "light"];
-
-    // Đổi 'email' thành 'username' cho khớp với backend
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    // Cập nhật hàm handleSignIn để gọi API
     const handleSignIn = async () => {
-        // Gọt sạch khoảng trắng thừa ở 2 đầu
         const cleanUsername = username.trim();
         const cleanPassword = password.trim();
 
@@ -35,14 +29,9 @@ export default function LoginScreen() {
 
         try {
             setIsLoading(true);
-            
-            // Log ra xem chính xác mình đang gửi cái gì lên
             console.log("Chuẩn bị gửi lên server:", `"${cleanUsername}"`, `"${cleanPassword}"`);
-
-            // Nhớ truyền cleanUsername và cleanPassword vào đây nhé!
-            const response = await loginUser(cleanUsername, cleanPassword);
+            const response = await AuthService.login(cleanUsername, cleanPassword);
             console.log("Đăng nhập thành công:", response);
-            
             router.replace("/(tabs)");
         } catch (error: any) {
             console.error("Lỗi đăng nhập:", error);

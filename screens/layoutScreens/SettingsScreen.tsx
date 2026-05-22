@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import CustomSwitch from "@/components/CustomSwitch";
 import { LinearGradient } from "expo-linear-gradient";
 import MainLayout from "@/components/MainLayout";
+import { AuthService } from "@/services/AuthService";
 
 export default function SettingsScreen() {
     const currentTheme = Colors[useColorScheme() ?? "light"];
@@ -33,6 +34,16 @@ export default function SettingsScreen() {
         }
         setIsGoalModalVisible(false);
     };
+
+    const handleLogout = async () => {
+        try {
+            await AuthService.logout()
+        } catch (error) {
+            console.error("Error in LOGOUT:", error)
+        } finally {
+            router.navigate("/login")
+        }
+    }
 
     const SettingGroup = ({ title, children }: any) => (
         <View style={styles.groupContainer}>
@@ -200,7 +211,7 @@ export default function SettingsScreen() {
             <View style={styles.logoutContainer}>
                 <TouchableOpacity
                     style={[styles.logoutBtn, { backgroundColor: "#FFE5EB" }]}
-                    onPress={() => router.replace("/login")}
+                    onPress={handleLogout}
                     activeOpacity={0.4}
                 >
                     <Feather name="log-out" size={20} color="#FF2D55" />
