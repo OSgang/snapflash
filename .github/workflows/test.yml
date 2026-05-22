@@ -22,17 +22,62 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
       - name: Install dependencies
         run: npm ci
 
       - name: Run tests with coverage
         run: npm run test:coverage -- --runInBand
 
+      - name: Create backend test configuration
+        working-directory: backend
+        run: |
+          mkdir -p src/test/resources
+          cat > src/test/resources/application-test.properties <<'EOF'
+          spring.datasource.url=${NEON_TEST_DATASOURCE_URL}
+          spring.datasource.username=${NEON_TEST_USERNAME}
+          spring.datasource.password=${NEON_TEST_PASSWORD}
+
+          spring.flyway.enabled=true
+          spring.flyway.url=${NEON_TEST_FLYWAY_URL}
+          spring.flyway.user=${NEON_TEST_USERNAME}
+          spring.flyway.password=${NEON_TEST_PASSWORD}
+
+          spring.jpa.hibernate.ddl-auto=validate
+
+          tesseract.datapath=/tmp
+          spring.servlet.multipart.max-file-size=10MB
+          spring.servlet.multipart.max-request-size=10MB
+          EOF
+
+      - name: Run backend tests with coverage
+        working-directory: backend
+        env:
+          NEON_TEST_DATASOURCE_URL: ${{ secrets.NEON_TEST_DATASOURCE_URL }}
+          NEON_TEST_FLYWAY_URL: ${{ secrets.NEON_TEST_FLYWAY_URL }}
+          NEON_TEST_USERNAME: ${{ secrets.NEON_TEST_USERNAME }}
+          NEON_TEST_PASSWORD: ${{ secrets.NEON_TEST_PASSWORD }}
+          JWT_SIGNER_KEY: ${{ secrets.JWT_SIGNER_KEY }}
+        run: ./gradlew test
+
       - name: Upload test report artifact
         uses: actions/upload-artifact@v4
         with:
           name: test-report
           path: test-report
+
+      - name: Upload backend test report artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-report
+          path: backend/build/reports/tests/test
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6
