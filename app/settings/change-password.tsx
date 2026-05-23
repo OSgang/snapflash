@@ -15,52 +15,23 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 
 import MainLayout from "@/components/MainLayout";
 import { Colors } from "@/constants/theme";
+import { AuthService } from "@/services/AuthService"; 
 
-export default function ChangePasswordScreen() {
-    const router = useRouter();
+// ==========================================
+// ĐÃ SỬA: ĐƯA PASSWORD INPUT RA NGOÀI COMPONENT CHÍNH
+// ==========================================
+const PasswordInput = ({
+    label,
+    value,
+    onChangeText,
+    showPassword,
+    setShowPassword,
+    placeholder,
+}: any) => {
+    // Đem hook useColorScheme vào đây để nó tự lấy theme
     const currentTheme = Colors[useColorScheme() ?? "light"];
 
-    const [currentPassword, setCurrentPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-
-    const [showCurrent, setShowCurrent] = useState(false);
-    const [showNew, setShowNew] = useState(false);
-    const [showConfirm, setShowConfirm] = useState(false);
-
-    // States quản lý Custom Alert
-    const [isAlertVisible, setIsAlertVisible] = useState(false);
-    const [alertContent, setAlertContent] = useState({ title: "", message: "" });
-
-    // Hàm hiển thị Alert
-    const showAlert = (title: string, message: string) => {
-        setAlertContent({ title, message });
-        setIsAlertVisible(true);
-    };
-
-    const handleUpdatePassword = () => {
-        if (!currentPassword || !newPassword || !confirmPassword) {
-            showAlert("Missing Information", "Please fill in all password fields to continue.");
-            return;
-        }
-
-        if (newPassword !== confirmPassword) {
-            showAlert("Password Mismatch", "The new passwords do not match. Please try again.");
-            return;
-        }
-
-        console.log("Updating password...");
-        router.back();
-    };
-
-    const PasswordInput = ({
-        label,
-        value,
-        onChangeText,
-        showPassword,
-        setShowPassword,
-        placeholder,
-    }: any) => (
+    return (
         <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: currentTheme.subText }]}>
                 {label}
@@ -105,9 +76,57 @@ export default function ChangePasswordScreen() {
             </View>
         </View>
     );
+};
+// ==========================================
+
+export default function ChangePasswordScreen() {
+    const router = useRouter();
+    const currentTheme = Colors[useColorScheme() ?? "light"];
+
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+
+    const [showCurrent, setShowCurrent] = useState(false);
+    const [showNew, setShowNew] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [isAlertVisible, setIsAlertVisible] = useState(false);
+    const [alertContent, setAlertContent] = useState<{title: string; message: string; onOk?: () => void}>({ title: "", message: "" });
+
+    const showAlert = (title: string, message: string, onOk?: () => void) => {
+        setAlertContent({ title, message, onOk });
+        setIsAlertVisible(true);
+    };
+
+    const handleUpdatePassword = async () => {
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            showAlert("Thiếu thông tin", "Vui lòng điền đầy đủ các trường để tiếp tục.");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            showAlert("Mật khẩu không khớp", "Mật khẩu xác nhận không trùng với mật khẩu mới. Vui lòng thử lại.");
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            await AuthService.changePassword(currentPassword, newPassword);
+            showAlert("Thành công", "Mật khẩu của bạn đã được cập nhật thành công!", () => {
+                router.back();
+            });
+        } catch (error: any) {
+            showAlert("Đổi mật khẩu thất bại", String(error));
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <MainLayout>
+            {/* Các phần UI bên dưới của bạn giữ nguyên, không cần thay đổi gì cả */}
             <View style={styles.header}>
                 <TouchableOpacity
                     onPress={() => router.back()}
@@ -165,6 +184,7 @@ export default function ChangePasswordScreen() {
                 </View>
 
                 <View style={styles.formSection}>
+                    {/* BÂY GIỜ CHÚNG TA TÁI SỬ DỤNG PASSWORD INPUT Ở ĐÂY BÌNH THƯỜNG */}
                     <PasswordInput
                         label="Current Password"
                         value={currentPassword}
@@ -196,13 +216,17 @@ export default function ChangePasswordScreen() {
                 <TouchableOpacity
                     style={[
                         styles.saveBtn,
-                        { backgroundColor: currentTheme.primary },
+                        { 
+                            backgroundColor: currentTheme.primary,
+                            opacity: isLoading ? 0.7 : 1 
+                        },
                     ]}
                     onPress={handleUpdatePassword}
                     activeOpacity={0.4}
+                    disabled={isLoading}
                 >
                     <Text style={styles.saveBtnText}>
-                        Update Password
+                        {isLoading ? "Updating..." : "Update Password"}
                     </Text>
                 </TouchableOpacity>
             </KeyboardAwareScrollView>
@@ -215,7 +239,6 @@ export default function ChangePasswordScreen() {
             >
                 <View style={styles.alertOverlay}>
                     <View style={[styles.alertBox, { backgroundColor: currentTheme.white }]}>
-                        {/* Icon cảnh báo màu đỏ nhạt */}
                         <View style={[styles.alertIconBg, { backgroundColor: "rgba(255, 45, 85, 0.1)" }]}>
                             <Feather name="alert-circle" size={32} color="#FF2D55" />
                         </View>
@@ -230,7 +253,12 @@ export default function ChangePasswordScreen() {
                         
                         <TouchableOpacity 
                             style={[styles.alertBtn, { backgroundColor: currentTheme.primary }]} 
-                            onPress={() => setIsAlertVisible(false)}
+                            onPress={() => {
+                                setIsAlertVisible(false);
+                                if (alertContent.onOk) {
+                                    alertContent.onOk();
+                                }
+                            }}
                             activeOpacity={0.8}
                         >
                             <Text style={styles.alertBtnText}>Got it</Text>
