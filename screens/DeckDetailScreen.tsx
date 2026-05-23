@@ -1,32 +1,42 @@
-import { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, ActivityIndicator } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { AntDesign, Feather } from "@expo/vector-icons";
-import { Colors, SIZES } from "@/constants/theme";
+import { Colors } from "@/constants/theme";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const VOCAB_DATA = [
-    {
-        id: "1",
-        word: "Capitalism",
-        type: "Noun",
-        definition:
-            "an economic system in which a country's businesses and industry are controlled and run for profit by private owners rather than by the government",
-    },
-    { id: "2", word: "Incentive", type: "", definition: "..." },
-    { id: "3", word: "Abolish", type: "", definition: "..." },
-    { id: "4", word: "Market", type: "", definition: "..." },
-];
+import { DeckService } from "@/services/DeckService";
 
 export default function DeckDetailScreen() {
     const currentTheme = Colors[useColorScheme() ?? "light"];
     const router = useRouter();
-    const [expandedId, setExpandedId] = useState<string | null>("1");
-    const { title } = useLocalSearchParams();
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+    
+    const { id, title } = useLocalSearchParams();
 
-    const toggleExpand = (id: string) => {
-        setExpandedId((prev) => (prev === id ? null : id));
+    const [flashcards, setFlashcards] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCards = async () => {
+            if (!id) return; 
+            
+            try {
+                setIsLoading(true);
+                const cards = await DeckService.getDeckById(id as string);
+                setFlashcards(cards || []);
+            } catch (error) {
+                console.log("Error while loading deck details: ", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchCards();
+    }, [id]);
+
+    const toggleExpand = (cardId: string) => {
+        setExpandedId((prev) => (prev === cardId ? null : cardId));
     };
 
     return (
@@ -41,91 +51,90 @@ export default function DeckDetailScreen() {
                 <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     <View style={styles.headerTitleRow}>
                         <Text style={[styles.title, { color: currentTheme.mainText }]}>{title || "Deck Details"}</Text>
-                        <TouchableOpacity style={[styles.checkBtn, { borderColor: currentTheme.mainText }]}>
+                        <TouchableOpacity style={[styles.checkBtn, { borderColor: currentTheme.mainText }]}
+                        onPress={() => router.back()}
+                            activeOpacity={0.7}
+                        >
                             <AntDesign name="check" size={20} color={currentTheme.mainText} />
                         </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity
-                        style={[
-                            styles.dropdown,
-                            { backgroundColor: currentTheme.white, borderColor: currentTheme.border },
-                        ]}
-                    >
-                        <Text style={{ fontSize: SIZES.body1, color: currentTheme.mainText, fontWeight: "500" }}>
-                            Tax
+                    {isLoading ? (
+                        <ActivityIndicator size="large" color={currentTheme.primary} style={{ marginTop: 40 }} />
+                    ) : flashcards.length === 0 ? (
+                        <Text style={{ textAlign: "center", color: currentTheme.subText, marginTop: 40 }}>
+                            This deck currently has no cards.
                         </Text>
-                        <AntDesign name="down" size={16} color={currentTheme.mainText} />
-                    </TouchableOpacity>
-
-                    {VOCAB_DATA.map((item) => {
-                        const isExpanded = expandedId === item.id;
-                        return (
-                            <View
-                                key={item.id}
-                                style={[
-                                    styles.accordionCard,
-                                    { backgroundColor: currentTheme.white, borderColor: currentTheme.border },
-                                ]}
-                            >
-                                <TouchableOpacity
-                                    style={styles.accordionHeader}
-                                    onPress={() => toggleExpand(item.id)}
-                                    activeOpacity={0.7}
+                    ) : (
+                        flashcards.map((item) => {
+                            const isExpanded = expandedId === item.flashcardId;
+                            return (
+                                <View
+                                    key={item.flashcardId}
+                                    style={[
+                                        styles.accordionCard,
+                                        { backgroundColor: currentTheme.white, borderColor: currentTheme.border },
+                                    ]}
                                 >
-                                    <Text style={[styles.wordTitle, { color: currentTheme.mainText }]}>
-                                        {item.word}
-                                    </Text>
-                                    <AntDesign
-                                        name={isExpanded ? "up" : "down"}
-                                        size={16}
-                                        color={currentTheme.mainText}
-                                    />
-                                </TouchableOpacity>
-
-                                {isExpanded && (
-                                    <View style={styles.accordionBody}>
-                                        <Text style={[styles.label, { color: currentTheme.mainText }]}>Type</Text>
-                                        <Text
-                                            style={[styles.value, { color: currentTheme.mainText, marginBottom: 12 }]}
-                                        >
-                                            {item.type}
+                                    <TouchableOpacity
+                                        style={styles.accordionHeader}
+                                        onPress={() => toggleExpand(item.flashcardId)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text style={[styles.wordTitle, { color: currentTheme.mainText }]}>
+                                            {item.word}
                                         </Text>
+                                        <AntDesign
+                                            name={isExpanded ? "up" : "down"}
+                                            size={16}
+                                            color={currentTheme.mainText}
+                                        />
+                                    </TouchableOpacity>
 
-                                        <Text style={[styles.label, { color: currentTheme.mainText }]}>Definition</Text>
-                                        <Text style={[styles.value, { color: currentTheme.mainText, lineHeight: 22 }]}>
-                                            {item.definition}
-                                        </Text>
-
-                                        <View style={[styles.divider, { backgroundColor: currentTheme.border }]} />
-
-                                        <View style={styles.actionRow}>
-                                            <TouchableOpacity
-                                                style={styles.actionBtn}
-                                                onPress={() =>
-                                                    router.push({
-                                                        pathname: "/edit-card",
-                                                        params: { cardId: item.id, word: item.word },
-                                                    })
-                                                }
+                                    {isExpanded && (
+                                        <View style={styles.accordionBody}>
+                                            <Text style={[styles.label, { color: currentTheme.mainText }]}>Translation</Text>
+                                            <Text
+                                                style={[styles.value, { color: currentTheme.mainText, marginBottom: 12 }]}
                                             >
-                                                <Feather name="edit-2" size={18} color={currentTheme.mainText} />
-                                                <Text style={[styles.actionText, { color: currentTheme.mainText }]}>
-                                                    Edit
-                                                </Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity style={styles.actionBtn}>
-                                                <Feather name="trash-2" size={18} color={currentTheme.mainText} />
-                                                <Text style={[styles.actionText, { color: currentTheme.mainText }]}>
-                                                    Delete
-                                                </Text>
-                                            </TouchableOpacity>
+                                                {item.translation}
+                                            </Text>
+
+                                            <Text style={[styles.label, { color: currentTheme.mainText }]}>Definition</Text>
+                                            <Text style={[styles.value, { color: currentTheme.mainText, lineHeight: 22 }]}>
+                                                {item.definition}
+                                            </Text>
+
+                                            <View style={[styles.divider, { backgroundColor: currentTheme.border }]} />
+
+                                            <View style={styles.actionRow}>
+                                                <TouchableOpacity
+                                                    style={styles.actionBtn}
+                                                    onPress={() =>
+                                                        router.push({
+                                                            pathname: "/edit-card",
+                                                            params: { cardId: item.flashcardId, word: item.word, deckTitle: title },
+                                                        })
+                                                    }
+                                                >
+                                                    <Feather name="edit-2" size={18} color={currentTheme.mainText} />
+                                                    <Text style={[styles.actionText, { color: currentTheme.mainText }]}>
+                                                        Edit
+                                                    </Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity style={styles.actionBtn}>
+                                                    <Feather name="trash-2" size={18} color={currentTheme.mainText} />
+                                                    <Text style={[styles.actionText, { color: currentTheme.mainText }]}>
+                                                        Delete
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            </View>
                                         </View>
-                                    </View>
-                                )}
-                            </View>
-                        );
-                    })}
+                                    )}
+                                </View>
+                            );
+                        })
+                    )}
                 </ScrollView>
             </SafeAreaView>
         </LinearGradient>
@@ -146,16 +155,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         justifyContent: "center",
         alignItems: "center",
-    },
-
-    dropdown: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: 16,
-        borderRadius: 12,
-        borderWidth: 1,
-        marginBottom: 20,
     },
 
     accordionCard: { borderWidth: 1, borderRadius: 12, marginBottom: 12, overflow: "hidden" },

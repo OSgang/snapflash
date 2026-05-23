@@ -1,9 +1,14 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
-
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useEffect, useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import { AuthService } from "@/services/AuthService"; 
+import * as SplashScreen from "expo-splash-screen";
+
+SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
     anchor: "(tabs)",
@@ -11,6 +16,48 @@ export const unstable_settings = {
 
 export default function RootLayout() {
     const colorScheme = useColorScheme();
+    const router = useRouter();
+    
+    const [isReady, setIsReady] = useState(false);
+    const [initialRoute, setInitialRoute] = useState<string | null>(null);
+
+    useEffect(() => {
+        const checkLoginStatus = async () => {
+            try {
+                const token = await SecureStore.getItemAsync("jwtToken");
+                
+                if (token) {
+                    const isValid = await AuthService.introspect(token);
+                    if (isValid) {
+                        setInitialRoute("/(tabs)");
+                        return;
+                    } else {
+                        await SecureStore.deleteItemAsync("jwtToken");
+                    }
+                } 
+                setInitialRoute("/onboarding");
+            } catch (error) {
+                setInitialRoute("/login");
+            } finally {
+                setIsReady(true); 
+            }
+        };
+
+        checkLoginStatus();
+    }, []);
+
+    useEffect(() => {
+        if (isReady && initialRoute) {
+            router.replace(initialRoute as any);
+            setTimeout(() => {
+                SplashScreen.hideAsync();
+            }, 100);
+        }
+    }, [isReady, initialRoute]);
+
+    if (!isReady) {
+        return null;
+    }
 
     return (
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>

@@ -20,7 +20,7 @@ export default function EditCardScreen() {
     const currentTheme = Colors[useColorScheme() ?? "light"];
     const router = useRouter();
     const [selectedType, setSelectedType] = useState("Verb");
-    const { word } = useLocalSearchParams();
+    const { word, deckTitle } = useLocalSearchParams();
 
     return (
         <LinearGradient colors={[currentTheme.customBackground as string, "#FFFFFF"]} style={styles.container}>
@@ -36,7 +36,7 @@ export default function EditCardScreen() {
                         <View style={styles.headerTitleRow}>
                             <Text style={[styles.title, { color: currentTheme.mainText }]}>{word || "Card"}</Text>
                             <TouchableOpacity style={[styles.checkBtn, { borderColor: currentTheme.mainText }]}>
-                                <AntDesign name="check" size={20} color={currentTheme.mainText} />
+                                <AntDesign name="check" size={20} color={currentTheme.mainText} onPress={() => router.back()} activeOpacity={0.7}/>
                             </TouchableOpacity>
                         </View>
 
@@ -48,9 +48,8 @@ export default function EditCardScreen() {
                             ]}
                         >
                             <Text style={{ fontSize: SIZES.body1, color: currentTheme.mainText, fontWeight: "500" }}>
-                                Economics
+                                {deckTitle}
                             </Text>
-                            <AntDesign name="down" size={16} color={currentTheme.mainText} />
                         </TouchableOpacity>
 
                         <Text style={[styles.sectionHeading, { color: currentTheme.mainText }]}>Front</Text>

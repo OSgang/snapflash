@@ -50,6 +50,15 @@ export const AuthService = {
         }
     },
 
+    introspect: async (token: string) => {
+        try {
+            const response = await apiClient.post(`${BASE_URL}/introspect`, { 
+                jwtToken: token 
+            });
+            return response.data.result.isValid;
+        } catch (error) {
+            console.log("Error in INTROSPECT: ", error);
+            return false;
     changePassword: async (currentPassword: string, newPassword: string) => {
         try {
             // Theo document API, dùng method PATCH cho /user/change-password
