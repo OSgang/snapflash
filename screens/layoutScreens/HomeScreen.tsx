@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, useColorScheme, TouchableOpacity } from "react-native";
+import { useState, useEffect } from "react"; // ĐÃ THÊM: hooks của React
+import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, ActivityIndicator } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Colors, SIZES } from "@/constants/theme";
 import DeckCard from "@/components/DeckCard";
@@ -6,16 +7,33 @@ import StatBox from "@/components/StatBox";
 import MainLayout from "@/components/MainLayout";
 import { useRouter } from "expo-router";
 
-const DUMMY_DECKS = [
-    { id: "1", title: "Houses", total: 20, learned: 4, time: "20 minutes ago" },
-    { id: "2", title: "Economics", total: 5, learned: 5, time: "45 minutes ago" },
-    { id: "3", title: "Health", total: 10, learned: 1, time: "90 minutes ago" },
-    { id: "4", title: "My Words", total: 50, learned: 45, time: "2 hours ago" },
-];
+// ĐÃ THÊM: Import DeckService
+import { DeckService } from "@/services/DeckService";
 
 export default function HomeScreen() {
     const currentTheme = Colors[useColorScheme() ?? "light"];
     const router = useRouter();
+
+    // ĐÃ THÊM: States để lưu dữ liệu Deck từ API và trạng thái Loading
+    const [decks, setDecks] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // ĐÃ THÊM: Gọi API lấy dữ liệu khi vừa vào màn hình
+    useEffect(() => {
+        const fetchDecks = async () => {
+            try {
+                setIsLoading(true);
+                const data = await DeckService.getAllDecks();
+                setDecks(data || []);
+            } catch (error) {
+                console.log("Lỗi tải Decks:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchDecks();
+    }, []);
 
     return (
         <MainLayout>
@@ -73,26 +91,36 @@ export default function HomeScreen() {
                 </TouchableOpacity>
             </View>
 
-            {DUMMY_DECKS.map((deck) => (
-                <DeckCard
-                    key={deck.id}
-                    title={deck.title}
-                    totalWords={deck.total}
-                    learnedWords={deck.learned}
-                    timeAgo={deck.time}
-                    variant="home"
-                    onPress={() => {
-                        console.log("Vào học bài:", deck.title);
-                        router.push({
-                            pathname: "/card",
-                            params: { id: deck.id, title: deck.title },
-                        });
-                    }}
-                />
-            ))}
+            {/* ĐÃ SỬA: Render danh sách từ API hoặc hiện Loading */}
+            {isLoading ? (
+                <ActivityIndicator size="large" color={currentTheme.primary} style={{ marginTop: 20 }} />
+            ) : decks.length === 0 ? (
+                <Text style={{ textAlign: "center", color: currentTheme.subText, marginTop: 20 }}>
+                    Bạn chưa có bộ bài nào. Hãy tạo mới nhé!
+                </Text>
+            ) : (
+                decks.map((deck) => (
+                    <DeckCard
+                        key={deck.deckId} 
+                        title={deck.deckName} // Gắn đúng trường trả về từ Backend
+                        totalWords={deck.flashcards?.length || 0} // Đếm số lượng flashcard thật
+                        learnedWords={0} // Có thể tự tính logic từ flipCount sau
+                        timeAgo="Vừa xong" // Tạm thời hardcode, hoặc format từ createdAt
+                        variant="home"
+                        onPress={() => {
+                            router.push({
+                                pathname: "/card",
+                                params: { id: deck.deckId, title: deck.deckName },
+                            });
+                        }}
+                    />
+                ))
+            )}
         </MainLayout>
     );
 }
+
+// ... styles giữ nguyên
 
 const styles = StyleSheet.create({
     headerTitle: {

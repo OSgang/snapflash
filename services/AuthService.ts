@@ -9,7 +9,7 @@ export const AuthService = {
             const response = await apiClient.post(`${BASE_URL}/register`, { email, username, password });
             return response.data.result;
         } catch (error: any) {
-            console.error("Error in REGISTER: ", error)
+            console.log("Error in REGISTER: ", error)
             throw error.response?.data || "Lỗi kết nối khi đăng ký";
         }
     },
@@ -25,7 +25,7 @@ export const AuthService = {
 
             return response.data.result;
         } catch (error: any) {
-            console.error("Error in LOGIN: ", error.message, error.response?.data)
+            console.log("Error in LOGIN: ", error.message, error.response?.data)
             throw error.response?.data || "Sai tài khoản hoặc mật khẩu";
         }
     },
@@ -34,7 +34,7 @@ export const AuthService = {
         try {
             await apiClient.post(`${BASE_URL}/logout`);
         } catch (error) {
-            console.error("Error in LOGOUT: ", error)
+            console.log("Error in LOGOUT: ", error)
         } finally {
             await SecureStore.deleteItemAsync("jwtToken");
         }
@@ -45,8 +45,20 @@ export const AuthService = {
             const response = await apiClient.get(`${BASE_URL}/greet`);
             return response.data;
         } catch (error: any) {
-            console.error("Error in GREET: ", error)
+            console.log("Error in GREET: ", error)
             throw error.response?.data || "Không thể lấy câu chào.";
+        }
+    },
+
+    introspect: async (token: string) => {
+        try {
+            const response = await apiClient.post(`${BASE_URL}/introspect`, { 
+                jwtToken: token 
+            });
+            return response.data.result.isValid;
+        } catch (error) {
+            console.log("Error in INTROSPECT: ", error);
+            return false;
         }
     },
 };
