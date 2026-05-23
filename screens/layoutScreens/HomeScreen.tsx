@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"; // ĐÃ THÊM: hooks của React
+import { useState, useEffect } from "react";
 import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, ActivityIndicator } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Colors, SIZES } from "@/constants/theme";
@@ -6,34 +6,58 @@ import DeckCard from "@/components/DeckCard";
 import StatBox from "@/components/StatBox";
 import MainLayout from "@/components/MainLayout";
 import { useRouter } from "expo-router";
-
-// ĐÃ THÊM: Import DeckService
+import * as SecureStore from "expo-secure-store";
 import { DeckService } from "@/services/DeckService";
+import { CardService } from "@/services/CardService";
+import { StatsCacheService } from "@/services/StatsCacheService";
+import { formatTimeAgo } from "@/services/date";
 
 export default function HomeScreen() {
     const currentTheme = Colors[useColorScheme() ?? "light"];
     const router = useRouter();
-
-    // ĐÃ THÊM: States để lưu dữ liệu Deck từ API và trạng thái Loading
     const [decks, setDecks] = useState<any[]>([]);
+    const [journeyStats, setJourneyStats] = useState({ learning: 0, mastered: 0 });
+    const [dailyGoal, setDailyGoal] = useState(20);
+    const [wordsStudiedToday, setWordsStudiedToday] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
 
-    // ĐÃ THÊM: Gọi API lấy dữ liệu khi vừa vào màn hình
     useEffect(() => {
-        const fetchDecks = async () => {
+        const fetchHomeData = async () => {
             try {
                 setIsLoading(true);
-                const data = await DeckService.getAllDecks();
-                setDecks(data || []);
+
+                const [decksData, journeyData, storedGoal, cachedStats] = await Promise.all([
+                    DeckService.getAllDecks(),
+                    CardService.getLearningJourney(),
+                    SecureStore.getItemAsync("dailyGoal"),
+                    StatsCacheService.getStats(),
+                ]);
+
+                setDecks(decksData || []);
+                setJourneyStats({
+                    learning: journeyData?.learning?.length || 0,
+                    mastered: journeyData?.mastered?.length || 0,
+                });
+
+                if (storedGoal) {
+                    setDailyGoal(parseInt(storedGoal));
+                }
+
+                if (cachedStats) {
+                    setWordsStudiedToday(cachedStats.wordsStudiedToday);
+                }
             } catch (error) {
-                console.log("Lỗi tải Decks:", error);
+                console.log("Lỗi tải dữ liệu màn hình chính:", error);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchDecks();
+        fetchHomeData();
     }, []);
+
+    const progressPercent = Math.min((wordsStudiedToday / dailyGoal) * 100, 100);
+    const wordsLeft = Math.max(dailyGoal - wordsStudiedToday, 0);
 
     return (
         <MainLayout>
@@ -42,15 +66,15 @@ export default function HomeScreen() {
             <Text style={[styles.sectionTitle, { color: currentTheme.mainText }]}>Overview</Text>
             <View style={styles.overviewRow}>
                 <StatBox
-                    label="Studied"
-                    number="25"
-                    desc="cards in today"
+                    label="Mastered"
+                    number={journeyStats.mastered.toString()}
+                    desc="cards total"
                     backgroundColor={currentTheme.statBlue as string}
                 />
                 <StatBox
-                    label="Reviewed"
-                    number="1"
-                    desc="cards in today"
+                    label="Learning"
+                    number={journeyStats.learning.toString()}
+                    desc="cards in progress"
                     backgroundColor={currentTheme.statOrange as string}
                 />
             </View>
@@ -60,13 +84,22 @@ export default function HomeScreen() {
                     <Text style={[styles.sectionTitle, { color: currentTheme.mainText, marginBottom: 0 }]}>
                         Daily Goal
                     </Text>
-                    <Text style={{ color: currentTheme.primary, fontWeight: "bold" }}>15 / 20 words</Text>
+                    <Text style={{ color: currentTheme.primary, fontWeight: "bold" }}>
+                        {wordsStudiedToday} / {dailyGoal} words
+                    </Text>
                 </View>
                 <View style={styles.progressBarBg}>
-                    <View style={[styles.progressBarFill, { backgroundColor: currentTheme.primary, width: "75%" }]} />
+                    <View
+                        style={[
+                            styles.progressBarFill,
+                            { backgroundColor: currentTheme.primary, width: `${progressPercent}%` },
+                        ]}
+                    />
                 </View>
                 <Text style={{ fontSize: 12, color: currentTheme.subText }}>
-                    Just 5 more words to reach your goal! 🔥
+                    {wordsLeft > 0
+                        ? `Just ${wordsLeft} more words to reach your goal! 🔥`
+                        : "You've reached your daily goal! 🎉"}
                 </Text>
             </View>
 
@@ -74,7 +107,7 @@ export default function HomeScreen() {
                 <View style={styles.reviewCardContent}>
                     <View>
                         <Text style={styles.reviewTitle}>Ready to Review</Text>
-                        <Text style={styles.reviewSubtitle}>30 cards need your attention</Text>
+                        <Text style={styles.reviewSubtitle}>{journeyStats.learning} cards need your attention</Text>
                     </View>
                     <View style={styles.playIconWrapper}>
                         <FontAwesome5 name="play" size={14} color={currentTheme.primary} />
@@ -86,12 +119,11 @@ export default function HomeScreen() {
                 <Text style={[styles.sectionTitle, { color: currentTheme.mainText, marginBottom: 0 }]}>
                     Last Accessed
                 </Text>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push("/collections")}>
                     <Text style={{ color: currentTheme.primary, fontSize: SIZES.body2 }}>See all</Text>
                 </TouchableOpacity>
             </View>
 
-            {/* ĐÃ SỬA: Render danh sách từ API hoặc hiện Loading */}
             {isLoading ? (
                 <ActivityIndicator size="large" color={currentTheme.primary} style={{ marginTop: 20 }} />
             ) : decks.length === 0 ? (
@@ -99,13 +131,13 @@ export default function HomeScreen() {
                     Bạn chưa có bộ bài nào. Hãy tạo mới nhé!
                 </Text>
             ) : (
-                decks.map((deck) => (
+                decks.slice(0, 3).map((deck) => (
                     <DeckCard
-                        key={deck.deckId} 
-                        title={deck.deckName} // Gắn đúng trường trả về từ Backend
-                        totalWords={deck.flashcards?.length || 0} // Đếm số lượng flashcard thật
-                        learnedWords={0} // Có thể tự tính logic từ flipCount sau
-                        timeAgo="Vừa xong" // Tạm thời hardcode, hoặc format từ createdAt
+                        key={deck.deckId}
+                        title={deck.deckName}
+                        totalWords={deck.flashcards?.length || 0}
+                        learnedWords={0}
+                        timeAgo={formatTimeAgo(deck.lastUpdate)}
                         variant="home"
                         onPress={() => {
                             router.push({
@@ -119,8 +151,6 @@ export default function HomeScreen() {
         </MainLayout>
     );
 }
-
-// ... styles giữ nguyên
 
 const styles = StyleSheet.create({
     headerTitle: {

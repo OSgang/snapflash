@@ -37,7 +37,7 @@ export default function RootLayout() {
                 } 
                 setInitialRoute("/onboarding");
             } catch (error) {
-                setInitialRoute("/login");
+                setInitialRoute("/onboarding");
             } finally {
                 setIsReady(true); 
             }
@@ -53,6 +53,7 @@ export default function RootLayout() {
                 SplashScreen.hideAsync();
             }, 100);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isReady, initialRoute]);
 
     if (!isReady) {

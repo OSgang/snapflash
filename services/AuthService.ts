@@ -59,9 +59,11 @@ export const AuthService = {
         } catch (error) {
             console.log("Error in INTROSPECT: ", error);
             return false;
+        }
+    },
+    
     changePassword: async (currentPassword: string, newPassword: string) => {
         try {
-            // Theo document API, dùng method PATCH cho /user/change-password
             const response = await apiClient.patch(`${BASE_URL}/change-password`, { 
                 currentPassword, 
                 newPassword 
@@ -69,7 +71,6 @@ export const AuthService = {
             return response.data.result;
         } catch (error: any) {
             console.log("Error in CHANGE PASSWORD: ", error);
-            // Ném lỗi từ Backend ra (Ví dụ: "Wrong password")
             throw error.response?.data || "Lỗi kết nối khi đổi mật khẩu";
         }
     },

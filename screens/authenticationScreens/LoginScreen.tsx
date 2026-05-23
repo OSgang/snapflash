@@ -8,6 +8,7 @@ import { Colors, SIZES } from "@/constants/theme";
 import AuthInput from "@/components/AuthInput";
 import AuthButton from "@/components/AuthButton";
 import { AuthService } from "@/services/AuthService";
+import * as SecureStore from "expo-secure-store";
 
 const { width, height } = Dimensions.get("window");
 
@@ -31,6 +32,7 @@ export default function LoginScreen() {
             setIsLoading(true);
             console.log("Chuẩn bị gửi lên server:", `"${cleanUsername}"`, `"${cleanPassword}"`);
             const response = await AuthService.login(cleanUsername, cleanPassword);
+            await SecureStore.setItemAsync("username", cleanUsername)
             console.log("Đăng nhập thành công:", response);
             router.replace("/(tabs)");
         } catch (error: any) {

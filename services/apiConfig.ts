@@ -16,8 +16,6 @@ const LOCAL_URL = getLocalApiUrl();
 
 const PROD_URL = "https://api.snapflash.app";
 
-console.log(LOCAL_URL);
-
 const BASE_URL = __DEV__ ? LOCAL_URL : PROD_URL;
 
 // eslint-disable-next-line import/no-named-as-default-member
