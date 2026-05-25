@@ -13,6 +13,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Colors, SIZES } from "@/constants/theme";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 
 const { width, height } = Dimensions.get("window");
 
@@ -39,133 +40,124 @@ const ONBOARDING_DATA = [
 ];
 
 export default function OnboardingScreen() {
+    const systemScheme = useColorScheme() ?? "light";
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
     const [currentIndex, setCurrentIndex] = useState(0);
-    const flatListRef = useRef<FlatList>(null);
+    const scrollX = useRef(new Animated.Value(0)).current;
+    const slidesRef = useRef<FlatList>(null);
     const router = useRouter();
 
-    const colorScheme = useColorScheme();
-    const currentTheme = Colors[colorScheme ?? "light"];
-
-    const [showSplash, setShowSplash] = useState(true);
-    const fadeAnim = useRef(new Animated.Value(1)).current;
-
     useEffect(() => {
-        const timer = setTimeout(() => {
-            Animated.timing(fadeAnim, {
-                toValue: 0,
-                duration: 500,
-                useNativeDriver: true,
-            }).start(() => {
-                setShowSplash(false);
-            });
-        }, 1000);
+        const syncTheme = async () => {
+            const storedTheme = await SecureStore.getItemAsync("themePreference");
+            if (storedTheme === "light" || storedTheme === "dark") {
+                setActiveMode(storedTheme);
+            } else {
+                setActiveMode(systemScheme);
+            }
+        };
+        syncTheme();
+    }, [systemScheme]);
 
-        return () => clearTimeout(timer);
-    }, [fadeAnim]);
+    const currentTheme = Colors[activeMode];
 
-    const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
-    const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
-        if (viewableItems[0]) {
+    const viewableItemsChanged = useRef(({ viewableItems }: any) => {
+        if (viewableItems && viewableItems.length > 0) {
             setCurrentIndex(viewableItems[0].index);
         }
     }).current;
 
-    const handleDotPress = (index: number) => {
-        flatListRef.current?.scrollToIndex({ index, animated: true });
-    };
+    const viewConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
 
     const handleNext = () => {
         if (currentIndex < ONBOARDING_DATA.length - 1) {
-            flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
+            slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
         } else {
-            router.navigate("/login");
+            router.replace("/login");
         }
     };
 
-    const renderItem = ({ item }: { item: (typeof ONBOARDING_DATA)[0] }) => {
-        return (
-            <View style={styles.screenContainer}>
-                <View style={styles.topCurveContainer}>
-                    <View style={styles.curveWrapper}>
-                        <LinearGradient
-                            colors={[currentTheme.lightButton, currentTheme.background]}
-                            style={styles.gradientCurve}
-                        />
-                    </View>
-
-                    <View style={styles.iconContainer}>
-                        <Image source={item.image} style={styles.slideImage} resizeMode="contain" />
-                    </View>
-                </View>
-
-                <View style={styles.bottomContent}>
-                    <Text style={[styles.slideTitle, { color: currentTheme.mainText }]}>{item.title}</Text>
-                    <Text style={[styles.slideDescription, { color: currentTheme.subText }]}>{item.description}</Text>
-                </View>
-            </View>
-        );
+    const handleSkip = () => {
+        router.replace("/login");
     };
 
     return (
         <View style={[styles.container, { backgroundColor: currentTheme.white }]}>
-            {showSplash && (
-                <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim, zIndex: 10 }]}>
-                    <LinearGradient
-                        colors={[currentTheme.lightButton, currentTheme.background]}
-                        style={[styles.screenContainer, { justifyContent: "center", alignItems: "center" }]}
-                    >
-                        <Image
-                            source={require("../assets/images/logo.png")}
-                            style={styles.mainLogo}
-                            resizeMode="contain"
-                        />
-                        <Text style={[styles.welcomeTitle, { color: currentTheme.heading }]}>SnapFlash</Text>
-                    </LinearGradient>
-                </Animated.View>
-            )}
-
-            <FlatList
-                ref={flatListRef}
+            <Animated.FlatList
                 data={ONBOARDING_DATA}
-                renderItem={renderItem}
                 keyExtractor={(item) => item.id}
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 bounces={false}
-                snapToInterval={width}
-                snapToAlignment="center"
-                decelerationRate="fast"
-                onViewableItemsChanged={onViewableItemsChanged}
-                viewabilityConfig={viewabilityConfig}
+                ref={slidesRef}
+                onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+                    useNativeDriver: false,
+                })}
+                onViewableItemsChanged={viewableItemsChanged}
+                viewabilityConfig={viewConfig}
+                renderItem={({ item }) => (
+                    <View style={[styles.slideContainer, { width }]}>
+                        <View style={styles.topCurveContainer}>
+                            <View style={styles.curveWrapper}>
+                                <LinearGradient
+                                    colors={activeMode === "dark" ? ["#1F325C", "#151718"] : ["#5B6CFF", "#E4EBF7"]}
+                                    style={styles.gradientCurve}
+                                />
+                            </View>
+                            <View style={styles.iconContainer}>
+                                <Image source={item.image} style={styles.slideImage} resizeMode="contain" />
+                            </View>
+                        </View>
+
+                        <View style={[styles.bottomContent, { backgroundColor: currentTheme.white }]}>
+                            <Text style={[styles.slideTitle, { color: currentTheme.mainText }]}>{item.title}</Text>
+                            <Text style={[styles.slideDescription, { color: currentTheme.subText }]}>
+                                {item.description}
+                            </Text>
+                        </View>
+                    </View>
+                )}
             />
 
             <View style={styles.footer}>
-                <View style={styles.pagination}>
-                    {ONBOARDING_DATA.map((_, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            onPress={() => handleDotPress(index)}
-                            activeOpacity={0.7}
-                            style={{ padding: 5 }}
-                        >
-                            <View
+                <TouchableOpacity onPress={handleSkip}>
+                    <Text style={[styles.btnText, { color: currentTheme.subText }]}>Skip</Text>
+                </TouchableOpacity>
+
+                <View style={styles.indicatorContainer}>
+                    {ONBOARDING_DATA.map((_, i) => {
+                        const inputRange = [(i - 1) * width, i * width, (i + 1) * width];
+                        const dotWidth = scrollX.interpolate({
+                            inputRange,
+                            outputRange: [10, 22, 10],
+                            extrapolate: "clamp",
+                        });
+                        const opacity = scrollX.interpolate({
+                            inputRange,
+                            outputRange: [0.3, 1, 0.3],
+                            extrapolate: "clamp",
+                        });
+                        return (
+                            <Animated.View
+                                key={i.toString()}
                                 style={[
                                     styles.dot,
-                                    currentIndex === index
-                                        ? [styles.activeDot, { backgroundColor: currentTheme.primary }]
-                                        : [styles.inactiveDot, { backgroundColor: currentTheme.border }],
+                                    {
+                                        width: dotWidth,
+                                        opacity,
+                                        backgroundColor: currentTheme.primary,
+                                    },
                                 ]}
                             />
-                        </TouchableOpacity>
-                    ))}
+                        );
+                    })}
                 </View>
 
-                <TouchableOpacity
-                    style={[styles.nextButton, { backgroundColor: currentTheme.lightButton }]}
-                    onPress={handleNext}
-                >
-                    <Text style={[styles.nextButtonText, { color: currentTheme.primary }]}>Next</Text>
+                <TouchableOpacity onPress={handleNext}>
+                    <Text style={[styles.btnText, { color: currentTheme.primary, fontWeight: "bold" }]}>
+                        {currentIndex === ONBOARDING_DATA.length - 1 ? "Get Started" : "Next"}
+                    </Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -174,9 +166,7 @@ export default function OnboardingScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    screenContainer: { width, height },
-    mainLogo: { width: 250, height: 250, marginBottom: 20 },
-    welcomeTitle: { fontSize: SIZES.h1, fontWeight: "bold" },
+    slideContainer: { flex: 1 },
     topCurveContainer: {
         height: height * 0.55,
         backgroundColor: "transparent",
@@ -193,19 +183,9 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: width,
         overflow: "hidden",
     },
-    gradientCurve: {
-        flex: 1,
-    },
-    iconContainer: {
-        zIndex: 2,
-        elevation: 2,
-        marginTop: 20,
-    },
-    slideImage: {
-        width: 140,
-        height: 140,
-    },
-
+    gradientCurve: { flex: 1 },
+    iconContainer: { zIndex: 2, elevation: 2, marginTop: 20 },
+    slideImage: { width: 140, height: 140 },
     bottomContent: { flex: 1, paddingHorizontal: 30, paddingTop: 40 },
     slideTitle: { fontSize: SIZES.h2, fontWeight: "bold", marginBottom: 15, lineHeight: 32 },
     slideDescription: { fontSize: SIZES.body1, lineHeight: 24 },
@@ -218,10 +198,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
     },
-    pagination: { flexDirection: "row", alignItems: "center" },
-    dot: { height: 8, borderRadius: 4, marginHorizontal: 4 },
-    activeDot: { width: 24 },
-    inactiveDot: { width: 8 },
-    nextButton: { paddingVertical: 12, paddingHorizontal: 30, borderRadius: SIZES.radius || 25 },
-    nextButtonText: { fontSize: SIZES.body1, fontWeight: "bold" },
+    btnText: { fontSize: 16 },
+    indicatorContainer: { flexDirection: "row", gap: 8 },
+    dot: { height: 10, borderRadius: 5 },
 });

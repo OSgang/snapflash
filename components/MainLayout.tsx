@@ -1,6 +1,8 @@
-import { StyleSheet, ScrollView, useColorScheme, View, ViewStyle } from "react-native";
+import { useEffect, useState } from "react";
+import { StyleSheet, ScrollView, useColorScheme, View, ViewStyle, DeviceEventEmitter } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as SecureStore from "expo-secure-store";
 import { Colors } from "@/constants/theme";
 
 interface MainLayoutProps {
@@ -10,7 +12,35 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children, isScrollable = true, style }: MainLayoutProps) {
-    const currentTheme = Colors[useColorScheme() ?? "light"];
+    const systemScheme = useColorScheme() ?? "light";
+
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
+
+    useEffect(() => {
+        const syncTheme = async () => {
+            const storedTheme = await SecureStore.getItemAsync("themePreference");
+
+            if (storedTheme === "light" || storedTheme === "dark") {
+                setActiveMode(storedTheme);
+            } else {
+                setActiveMode(systemScheme);
+            }
+        };
+
+        syncTheme();
+
+        const subscription = DeviceEventEmitter.addListener("themeChanged", (mode) => {
+            if (mode === "light" || mode === "dark") {
+                setActiveMode(mode);
+            } else {
+                setActiveMode(systemScheme);
+            }
+        });
+
+        return () => subscription.remove();
+    }, [systemScheme]);
+
+    const currentTheme = Colors[activeMode];
 
     const content = isScrollable ? (
         <ScrollView contentContainerStyle={[styles.scrollContent, style]} showsVerticalScrollIndicator={false}>

@@ -10,6 +10,9 @@ import {
     Animated,
     Easing,
     TextInput,
+    Modal,
+    ActivityIndicator,
+    Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -19,6 +22,11 @@ import { Colors } from "@/constants/theme";
 import { useRouter, Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
+
+import { ScanService } from "@/services/ScanService";
+import { DeckService } from "@/services/DeckService";
+import { CardService } from "@/services/CardService";
+import * as SecureStore from "expo-secure-store";
 
 const { width, height } = Dimensions.get("window");
 const CAMERA_HEIGHT = height * 0.45;
@@ -35,12 +43,13 @@ const LANGUAGES = [
 
 interface ScannedWord {
     id: string;
-    text: string;
-    level: string;
+    word: string;
+    translation: string;
 }
 
 export default function ScanScreen() {
-    const currentTheme = Colors[useColorScheme() ?? "light"];
+    const systemScheme = useColorScheme() ?? "light";
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
     const router = useRouter();
     const [permission, requestPermission] = useCameraPermissions();
 
@@ -62,8 +71,29 @@ export default function ScanScreen() {
     const bottomSheetAnim = useRef(new Animated.Value(height)).current;
     const langSheetAnim = useRef(new Animated.Value(height)).current;
 
+    const frameFlashAnim = useRef(new Animated.Value(0)).current;
+
+    const [isCreateDeckModal, setIsCreateDeckModal] = useState(false);
+    const [newDeckName, setNewDeckName] = useState("");
+    const [newDeckDesc, setNewDeckDesc] = useState("");
+    const [isCreatingBatch, setIsCreatingBatch] = useState(false);
+
+    useEffect(() => {
+        const syncTheme = async () => {
+            const storedTheme = await SecureStore.getItemAsync("themePreference");
+            if (storedTheme === "light" || storedTheme === "dark") {
+                setActiveMode(storedTheme);
+            } else {
+                setActiveMode(systemScheme);
+            }
+        };
+        syncTheme();
+    }, [systemScheme]);
+
+    const currentTheme = Colors[activeMode];
+
     const showToast = (word: string) => {
-        setToastMessage(`Detected: ${word}`);
+        setToastMessage(word);
         toastAnim.setValue(-100);
         Animated.sequence([
             Animated.timing(toastAnim, { toValue: 50, duration: 300, useNativeDriver: true }),
@@ -72,23 +102,137 @@ export default function ScanScreen() {
         ]).start();
     };
 
+    const triggerFrameFlash = () => {
+        frameFlashAnim.setValue(1);
+        Animated.timing(frameFlashAnim, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+        }).start();
+    };
+
     const pickImage = async () => {
         try {
             let result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
-                quality: 0.5,
-                base64: true,
+                quality: 0.8,
             });
 
-            if (!result.canceled && result.assets[0].base64) {
-                const newWord = { id: Date.now().toString(), text: "Imported_Doc", level: "B2" };
-                setScannedWords((prev) => [newWord, ...prev]);
-                showToast("Imported_Doc");
-                setShowScannedList(true);
+            if (!result.canceled && result.assets[0].uri) {
+                setIsScanning(false);
+                triggerFrameFlash();
+
+                const candidates = await ScanService.scanImage(result.assets[0].uri);
+
+                if (candidates && candidates.length > 0) {
+                    const newWords = candidates.map((item: any, index: number) => ({
+                        id: Date.now().toString() + index,
+                        word: item.word,
+                        translation: item.translation?.[0] || "No translation",
+                    }));
+
+                    setScannedWords((prev) => [...newWords, ...prev]);
+                    showToast(`${newWords.length} words found`);
+                    setShowScannedList(true);
+                } else {
+                    showToast("No words detected");
+                }
             }
         } catch (error) {
-            console.log("Error picking image: ", error);
+            console.log("Error picking/scanning image: ", error);
+        } finally {
+            setIsScanning(true);
+        }
+    };
+
+    const handleCapture = async () => {
+        if (!cameraRef.current || !isScanning || isProcessingFrame.current) return;
+
+        isProcessingFrame.current = true;
+
+        try {
+            const photo = await cameraRef.current.takePictureAsync({
+                quality: 0.8,
+                skipProcessing: false,
+            });
+
+            if (photo?.uri) {
+                triggerFrameFlash();
+                showToast("Đang phân tích...");
+
+                const candidates = await ScanService.scanImage(photo.uri);
+
+                if (candidates && candidates.length > 0) {
+                    const newWords = candidates.map((item: any, index: number) => ({
+                        id: Date.now().toString() + index,
+                        word: item.word,
+                        translation: item.translation?.[0] || "No translation",
+                    }));
+
+                    setScannedWords((prev) => {
+                        const uniqueNewWords = newWords.filter(
+                            (nw: any) => !prev.some((pw) => pw.word.toLowerCase() === nw.word.toLowerCase()),
+                        );
+                        if (uniqueNewWords.length > 0) {
+                            showToast(`Đã thêm ${uniqueNewWords.length} từ`);
+                            return [...uniqueNewWords, ...prev];
+                        } else {
+                            showToast("Không tìm thấy từ mới");
+                            return prev;
+                        }
+                    });
+                } else {
+                    showToast("Không nhận diện được từ nào");
+                }
+            }
+        } catch (e) {
+            console.log("Manual scan error: ", e);
+            showToast("Lỗi khi quét ảnh");
+        } finally {
+            isProcessingFrame.current = false;
+        }
+    };
+
+    const handleRemoveWord = (id: string) => {
+        setScannedWords((prev) => prev.filter((item) => item.id !== id));
+    };
+
+    const handleBatchCreate = async () => {
+        if (!newDeckName.trim()) {
+            Alert.alert("Lỗi", "Vui lòng nhập tên bộ bài");
+            return;
+        }
+        if (scannedWords.length === 0) {
+            Alert.alert("Lỗi", "Không có từ vựng nào để tạo!");
+            return;
+        }
+
+        try {
+            setIsCreatingBatch(true);
+            const newDeck = await DeckService.createDeck(newDeckName.trim(), newDeckDesc.trim());
+            const promises = scannedWords.map((w) =>
+                CardService.createCard(newDeck.deckId, w.word, w.translation, `[Vocabulary] ${w.translation}`),
+            );
+            await Promise.all(promises);
+
+            Alert.alert("Hoàn tất", `Đã tạo bộ bài "${newDeckName}" với ${scannedWords.length} thẻ!`, [
+                {
+                    text: "Xem ngay",
+                    onPress: () => {
+                        setIsCreateDeckModal(false);
+                        setShowScannedList(false);
+                        setScannedWords([]);
+                        setNewDeckName("");
+                        setNewDeckDesc("");
+                        router.push({ pathname: "/deck", params: { id: newDeck.deckId, title: newDeck.deckName } });
+                    },
+                },
+            ]);
+        } catch (e: any) {
+            Alert.alert("Lỗi tạo bộ bài", String(e));
+        } finally {
+            setIsCreatingBatch(false);
         }
     };
 
@@ -134,43 +278,15 @@ export default function ScanScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showLangSheet]);
 
-    useEffect(() => {
-        let interval: number;
-        const captureAndProcessFrame = async () => {
-            if (!cameraRef.current || !isScanning || isProcessingFrame.current) return;
-            isProcessingFrame.current = true;
-            try {
-                const photo = await cameraRef.current.takePictureAsync({
-                    quality: 0.3,
-                    base64: true,
-                    skipProcessing: true,
-                });
-                if (photo?.base64) {
-                    await new Promise((resolve) => setTimeout(resolve, 600));
-                    const fakeResult = ["Logic", "Component", "State", "Effect"][Math.floor((Date.now() % 4) * 4)];
-                    setScannedWords((prev) => [{ id: Date.now().toString(), text: fakeResult, level: "B1" }, ...prev]);
-                    showToast(fakeResult);
-                }
-            } catch (e) {
-                console.log(e);
-            } finally {
-                isProcessingFrame.current = false;
-            }
-        };
-        if (isScanning && permission?.granted) interval = setInterval(captureAndProcessFrame, 3000);
-        return () => {
-            if (interval) clearInterval(interval);
-            isProcessingFrame.current = false;
-        };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isScanning, permission]);
-
     const filteredLanguages = LANGUAGES.filter((l) => l.name.toLowerCase().includes(searchLang.toLowerCase()));
 
     if (!permission) return <View />;
 
     return (
-        <LinearGradient colors={[currentTheme.customBackground as string, "#92CEFF"]} style={styles.container}>
+        <LinearGradient
+            colors={[currentTheme.customBackground as string, activeMode === "dark" ? "#151718" : "#92CEFF"]}
+            style={styles.container}
+        >
             <Stack.Screen options={{ headerShown: false }} />
 
             <Animated.View style={[styles.toastContainer, { transform: [{ translateY: toastAnim }] }]}>
@@ -182,8 +298,13 @@ export default function ScanScreen() {
 
             <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
                 <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.headerIconWrapper}>
+                        <AntDesign name="arrow-left" size={28} color={currentTheme.mainText} />
+                    </TouchableOpacity>
+
                     <Text style={[styles.headerTitle, { color: currentTheme.mainText }]}>SnapFlash</Text>
-                    <TouchableOpacity onPress={() => setIsFlashOn(!isFlashOn)}>
+
+                    <TouchableOpacity onPress={() => setIsFlashOn(!isFlashOn)} style={styles.headerIconWrapper}>
                         <MaterialCommunityIcons
                             name={isFlashOn ? "flashlight" : "flashlight-off"}
                             size={28}
@@ -208,15 +329,22 @@ export default function ScanScreen() {
                                 <Text style={[styles.noCameraTitle, { color: currentTheme.mainText }]}>
                                     Camera unavailable
                                 </Text>
-                                <Text style={{ color: currentTheme.primary, marginTop: 10 }}>
-                                    Please allow to grant permission
-                                </Text>
                             </TouchableOpacity>
                         ) : (
                             <CameraView ref={cameraRef} style={styles.camera} facing="back" enableTorch={isFlashOn}>
+                                <Animated.View
+                                    style={[
+                                        StyleSheet.absoluteFillObject,
+                                        { backgroundColor: "white", opacity: frameFlashAnim, zIndex: 1 },
+                                    ]}
+                                    pointerEvents="none"
+                                />
                                 {isScanning && (
                                     <Animated.View
-                                        style={[styles.scanLineWrapper, { transform: [{ translateY: scanLineAnim }] }]}
+                                        style={[
+                                            styles.scanLineWrapper,
+                                            { transform: [{ translateY: scanLineAnim }], zIndex: 2 },
+                                        ]}
                                     >
                                         <View style={styles.scanLine} />
                                         <View style={styles.scanGlow} />
@@ -230,13 +358,19 @@ export default function ScanScreen() {
                         <Text style={[styles.statusText, { color: currentTheme.primary }]}>Scan your documents</Text>
                         <View style={[styles.detectingWrapper, !isScanning && { opacity: 0.5 }]}>
                             <View style={[styles.a0Badge, { backgroundColor: currentTheme.lightButton }]}>
-                                <Text style={[styles.a0Text, { color: currentTheme.primary }]}>A0</Text>
+                                <Text
+                                    style={[
+                                        styles.a0Text,
+                                        { color: activeMode === "dark" ? "#FFF" : currentTheme.primary },
+                                    ]}
+                                >
+                                    A0
+                                </Text>
                             </View>
                             <Text style={[styles.detectingText, { color: currentTheme.mainText }]}>
-                                {isScanning ? "Detecting..." : "Paused"}
+                                {isScanning ? "Ready to scan" : "Paused"}
                             </Text>
                         </View>
-
                         <TouchableOpacity
                             style={[styles.langBtn, { backgroundColor: currentTheme.border + "50" }]}
                             onPress={() => setShowLangSheet(true)}
@@ -249,18 +383,22 @@ export default function ScanScreen() {
                 </View>
 
                 <View style={styles.bottomControls}>
-                    <TouchableOpacity onPress={pickImage} activeOpacity={0.7}>
+                    <TouchableOpacity onPress={pickImage} activeOpacity={0.7} style={styles.sideBtn}>
                         <Feather name="image" size={28} color={currentTheme.primary} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[styles.closeBtn, { backgroundColor: currentTheme.lightButton }]}
-                        onPress={() => router.back()}
+                        style={[styles.captureBtn, { backgroundColor: currentTheme.primary }]}
+                        onPress={handleCapture}
+                        activeOpacity={0.8}
                     >
-                        <AntDesign name="close" size={28} color={currentTheme.primary} />
+                        <MaterialCommunityIcons name="camera-iris" size={40} color="#FFF" />
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => setShowScannedList(true)} style={styles.listIconBtn}>
+                    <TouchableOpacity
+                        onPress={() => setShowScannedList(true)}
+                        style={[styles.listIconBtn, styles.sideBtn]}
+                    >
                         <MaterialCommunityIcons name="sort-variant" size={32} color={currentTheme.primary} />
                         {scannedWords.length > 0 && (
                             <View style={styles.badge}>
@@ -271,13 +409,15 @@ export default function ScanScreen() {
                 </View>
             </SafeAreaView>
 
-            {(showScannedList || showLangSheet) && (
+            {(showScannedList || showLangSheet || isCreateDeckModal) && (
                 <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill}>
                     <TouchableOpacity
                         style={{ flex: 1 }}
                         onPress={() => {
-                            setShowScannedList(false);
-                            setShowLangSheet(false);
+                            if (!isCreatingBatch) {
+                                setShowScannedList(false);
+                                setShowLangSheet(false);
+                            }
                         }}
                         activeOpacity={1}
                     />
@@ -293,15 +433,25 @@ export default function ScanScreen() {
                 <View style={styles.sheetHandle} />
                 <View style={styles.sheetHeader}>
                     <View>
-                        <Text style={styles.sheetTitle}>List of scanned</Text>
+                        <Text style={[styles.sheetTitle, { color: currentTheme.mainText }]}>List of scanned</Text>
                         <Text style={styles.sheetSubtitle}>{scannedWords.length} words detected</Text>
                     </View>
-                    <TouchableOpacity
-                        style={[styles.doneBtn, { backgroundColor: currentTheme.primary }]}
-                        onPress={() => setShowScannedList(false)}
-                    >
-                        <Text style={styles.doneBtnText}>Done</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: "row", gap: 10 }}>
+                        {scannedWords.length > 0 && (
+                            <TouchableOpacity
+                                style={[styles.doneBtn, { backgroundColor: currentTheme.primary }]}
+                                onPress={() => setIsCreateDeckModal(true)}
+                            >
+                                <Text style={styles.doneBtnText}>Create</Text>
+                            </TouchableOpacity>
+                        )}
+                        <TouchableOpacity
+                            style={[styles.doneBtn, { backgroundColor: currentTheme.border }]}
+                            onPress={() => setShowScannedList(false)}
+                        >
+                            <Text style={[styles.doneBtnText, { color: currentTheme.mainText }]}>Done</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
                 <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
                     {scannedWords.length === 0 ? (
@@ -315,14 +465,25 @@ export default function ScanScreen() {
                         </View>
                     ) : (
                         scannedWords.map((word) => (
-                            <View key={word.id} style={[styles.itemCard, { borderColor: currentTheme.primary }]}>
-                                <Text style={styles.itemText}>{word.text}</Text>
+                            <View
+                                key={word.id}
+                                style={[
+                                    styles.itemCard,
+                                    {
+                                        borderColor: currentTheme.primary,
+                                        backgroundColor: activeMode === "dark" ? "#222" : "rgba(255,255,255,0.5)",
+                                    },
+                                ]}
+                            >
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.itemText, { color: currentTheme.mainText }]}>{word.word}</Text>
+                                    <Text style={{ fontSize: 13, color: currentTheme.subText, marginTop: 4 }}>
+                                        {word.translation}
+                                    </Text>
+                                </View>
                                 <View style={styles.itemActions}>
-                                    <TouchableOpacity>
-                                        <Feather name="edit-2" size={16} color={currentTheme.primary} />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity>
-                                        <AntDesign name="check-circle" size={18} color={currentTheme.primary} />
+                                    <TouchableOpacity onPress={() => handleRemoveWord(word.id)}>
+                                        <Feather name="trash-2" size={24} color="#FF3B30" />
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -331,64 +492,67 @@ export default function ScanScreen() {
                 </ScrollView>
             </Animated.View>
 
-            <Animated.View
-                style={[
-                    styles.bottomSheet,
-                    { transform: [{ translateY: langSheetAnim }], backgroundColor: currentTheme.white },
-                ]}
+            <Modal
+                visible={isCreateDeckModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => {
+                    if (!isCreatingBatch) setIsCreateDeckModal(false);
+                }}
             >
-                <View style={styles.sheetHandle} />
-                <View style={styles.sheetHeader}>
-                    <Text style={styles.sheetTitle}>Select Language</Text>
-                    <TouchableOpacity onPress={() => setShowLangSheet(false)}>
-                        <AntDesign name="close" size={22} color={currentTheme.mainText} />
-                    </TouchableOpacity>
-                </View>
-
-                <View style={[styles.searchBar, { backgroundColor: currentTheme.customBackground }]}>
-                    <Ionicons name="search" size={18} color={currentTheme.subText} />
-                    <TextInput
-                        placeholder="Search language..."
-                        style={styles.searchInput}
-                        value={searchLang}
-                        onChangeText={setSearchLang}
-                    />
-                </View>
-
-                <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-                    {filteredLanguages.map((lang) => {
-                        const isSelected = selectedLang.code === lang.code;
-                        return (
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: currentTheme.white }]}>
+                        <Text style={[styles.modalTitle, { color: currentTheme.mainText }]}>
+                            Create Deck for {scannedWords.length} words
+                        </Text>
+                        <TextInput
+                            style={[
+                                styles.modalInput,
+                                { color: currentTheme.mainText, borderColor: currentTheme.border },
+                            ]}
+                            placeholder="Deck name"
+                            placeholderTextColor={currentTheme.subText}
+                            value={newDeckName}
+                            onChangeText={setNewDeckName}
+                        />
+                        <TextInput
+                            style={[
+                                styles.modalInput,
+                                { color: currentTheme.mainText, borderColor: currentTheme.border, height: 80 },
+                            ]}
+                            placeholder="Deck description (Optional)"
+                            placeholderTextColor={currentTheme.subText}
+                            value={newDeckDesc}
+                            onChangeText={setNewDeckDesc}
+                            multiline
+                            textAlignVertical="top"
+                        />
+                        <View style={styles.modalActionRow}>
                             <TouchableOpacity
-                                key={lang.code}
-                                style={[
-                                    styles.langItem,
-                                    isSelected && { backgroundColor: currentTheme.primary + "15" },
-                                ]}
-                                onPress={() => {
-                                    setSelectedLang(lang);
-                                    setShowLangSheet(false);
-                                }}
+                                style={[styles.modalBtn, { backgroundColor: "transparent" }]}
+                                onPress={() => setIsCreateDeckModal(false)}
+                                disabled={isCreatingBatch}
                             >
-                                <View style={styles.langItemLeft}>
-                                    <Text style={{ fontSize: 24, marginRight: 8 }}>{lang.flag}</Text>
-                                    <Text
-                                        style={[
-                                            styles.langItemText,
-                                            isSelected && { color: currentTheme.primary, fontWeight: "bold" },
-                                        ]}
-                                    >
-                                        {lang.name}
-                                    </Text>
-                                </View>
-                                {isSelected && (
-                                    <Ionicons name="checkmark-circle" size={22} color={currentTheme.primary} />
+                                <Text style={[styles.modalBtnText, { color: currentTheme.subText }]}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalBtn,
+                                    { backgroundColor: currentTheme.primary, opacity: isCreatingBatch ? 0.7 : 1 },
+                                ]}
+                                onPress={handleBatchCreate}
+                                disabled={isCreatingBatch}
+                            >
+                                {isCreatingBatch ? (
+                                    <ActivityIndicator size="small" color="#FFF" />
+                                ) : (
+                                    <Text style={[styles.modalBtnText, { color: "#FFF" }]}>Create</Text>
                                 )}
                             </TouchableOpacity>
-                        );
-                    })}
-                </ScrollView>
-            </Animated.View>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </LinearGradient>
     );
 }
@@ -419,7 +583,8 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         marginTop: 10,
     },
-    headerTitle: { fontSize: 24, fontWeight: "bold" },
+    headerIconWrapper: { width: 40, alignItems: "center" },
+    headerTitle: { fontSize: 24, fontWeight: "bold", textAlign: "center", flex: 1 },
     mainContent: { flex: 1, justifyContent: "center", paddingBottom: 90 },
     cameraWrapper: {
         height: CAMERA_HEIGHT,
@@ -461,30 +626,33 @@ const styles = StyleSheet.create({
     langText: { fontSize: 15, fontWeight: "600" },
     bottomControls: {
         flexDirection: "row",
-        justifyContent: "space-around",
+        justifyContent: "space-between",
         alignItems: "center",
         position: "absolute",
-        bottom: 40,
-        left: 20,
-        right: 20,
+        bottom: 30,
+        left: 30,
+        right: 30,
     },
-    closeBtn: {
-        width: 70,
-        height: 70,
-        borderRadius: 35,
+    sideBtn: { width: 50, alignItems: "center", justifyContent: "center" },
+    captureBtn: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
         justifyContent: "center",
         alignItems: "center",
-        elevation: 2,
+        elevation: 4,
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+        borderWidth: 4,
+        borderColor: "rgba(255,255,255,0.5)",
     },
-    listIconBtn: { position: "relative", padding: 5 },
+    listIconBtn: { position: "relative" },
     badge: {
         position: "absolute",
-        top: 0,
-        right: -2,
+        top: -5,
+        right: 5,
         justifyContent: "center",
         alignItems: "center",
         backgroundColor: "#FF3B30",
@@ -531,27 +699,36 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         borderWidth: 1,
         marginBottom: 10,
-        backgroundColor: "rgba(255,255,255,0.5)",
     },
     itemText: { fontSize: 16, fontWeight: "600" },
     itemActions: { flexDirection: "row", gap: 15 },
-    searchBar: {
-        flexDirection: "row",
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        justifyContent: "center",
         alignItems: "center",
-        paddingHorizontal: 15,
-        height: 45,
-        borderRadius: 12,
-        marginBottom: 15,
+        padding: 20,
     },
-    searchInput: { flex: 1, marginLeft: 10, fontSize: 15 },
-    langItem: {
-        flexDirection: "row",
+    modalContent: {
+        width: "100%",
+        borderRadius: 16,
+        padding: 24,
+        elevation: 5,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+    },
+    modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
+    modalInput: { borderWidth: 1, borderRadius: 12, padding: 15, fontSize: 16, marginBottom: 15 },
+    modalActionRow: { flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 10 },
+    modalBtn: {
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+        minWidth: 100,
         alignItems: "center",
-        justifyContent: "space-between",
-        paddingVertical: 15,
-        paddingHorizontal: 10,
-        borderRadius: 12,
+        justifyContent: "center",
     },
-    langItemLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
-    langItemText: { fontSize: 16, color: "#333" },
+    modalBtnText: { fontSize: 16, fontWeight: "bold" },
 });

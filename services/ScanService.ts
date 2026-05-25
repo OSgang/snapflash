@@ -1,28 +1,40 @@
 import apiClient from "./apiConfig";
+import * as SecureStore from "expo-secure-store";
+import * as FileSystem from "expo-file-system/legacy";
+import * as ImageManipulator from "expo-image-manipulator";
 
 export const ScanService = {
     scanImage: async (imageUri: string) => {
         try {
-            const formData = new FormData();
-            const filename = imageUri.split("/").pop() || "scan_image.jpg";
-            const match = /\.([^.]+)$/.exec(filename);
-            const type = match ? `image/${match[1]}` : `image/jpeg`;
+            const manipResult = await ImageManipulator.manipulateAsync(
+                imageUri,
+                [],
+                { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+            );
 
-            formData.append("multipartFile", {
-                uri: imageUri,
-                name: filename,
-                type,
-            } as any);
+            const token = await SecureStore.getItemAsync("jwtToken");
+            const baseURL = apiClient.defaults.baseURL;
 
-            const response = await apiClient.post("/scan", formData, {
+            const response = await FileSystem.uploadAsync(`${baseURL}/scan`, manipResult.uri, {
+                fieldName: "multipartFile",
+                httpMethod: "POST",
+                uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+                mimeType: "image/jpeg",
                 headers: {
-                    "Content-Type": "multipart/form-data",
+                    Authorization: `Bearer ${token}`,
                 },
             });
-            return response.data.result;
+
+            const responseData = JSON.parse(response.body);
+
+            if (response.status !== 200) {
+                throw responseData.message || "Lỗi server khi phân tích ảnh";
+            }
+
+            return responseData.result;
         } catch (error: any) {
             console.log("Error in SCAN IMAGE: ", error);
-            throw error.response?.data || "Lỗi hệ thống khi phân tích hình ảnh";
+            throw error;
         }
     },
 
@@ -31,7 +43,7 @@ export const ScanService = {
             const response = await apiClient.get("/lookup", {
                 params: { word },
             });
-            return response.data.result;
+            return response.data.result; 
         } catch (error: any) {
             console.log("Error in LOOKUP WORD: ", error);
             throw error.response?.data || "Không thể tra cứu từ vựng này";

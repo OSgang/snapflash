@@ -1,5 +1,6 @@
-import { useEffect, useRef, useMemo } from "react";
-import { View, Text, StyleSheet, useColorScheme, Animated } from "react-native";
+import { useEffect, useRef, useMemo, useState } from "react";
+import { View, Text, StyleSheet, useColorScheme, Animated, DeviceEventEmitter } from "react-native";
+import * as SecureStore from "expo-secure-store";
 import { Colors, SIZES } from "@/constants/theme";
 
 const AnimatedBar = ({ item, maxWords, currentTheme }: any) => {
@@ -42,7 +43,34 @@ const AnimatedBar = ({ item, maxWords, currentTheme }: any) => {
 };
 
 export default function BarChart({ title, data, goalValue, expectedLabels }: any) {
-    const currentTheme = Colors[useColorScheme() ?? "light"];
+    const systemScheme = useColorScheme() ?? "light";
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
+
+    useEffect(() => {
+        const syncTheme = async () => {
+            const storedTheme = await SecureStore.getItemAsync("themePreference");
+
+            if (storedTheme === "light" || storedTheme === "dark") {
+                setActiveMode(storedTheme);
+            } else {
+                setActiveMode(systemScheme);
+            }
+        };
+
+        syncTheme();
+
+        const subscription = DeviceEventEmitter.addListener("themeChanged", (mode) => {
+            if (mode === "light" || mode === "dark") {
+                setActiveMode(mode);
+            } else {
+                setActiveMode(systemScheme);
+            }
+        });
+
+        return () => subscription.remove();
+    }, [systemScheme]);
+
+    const currentTheme = Colors[activeMode];
 
     const processedData = useMemo(() => {
         let result = [...data];

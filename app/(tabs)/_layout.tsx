@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, useColorScheme, DeviceEventEmitter } from "react-native";
 import { Tabs, useRouter } from "expo-router";
 import { AntDesign, Ionicons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
@@ -9,7 +9,8 @@ import Animated, {
     interpolate,
     withTiming,
 } from "react-native-reanimated";
-
+import { useState, useEffect } from "react";
+import * as SecureStore from "expo-secure-store";
 import { Colors } from "@/constants/theme";
 
 const { width } = Dimensions.get("window");
@@ -17,17 +18,46 @@ const TAB_BAR_HEIGHT = 70;
 const CONTAINER_HEIGHT = 160;
 
 const CustomTabBar = ({ state, descriptors, navigation }: any) => {
-    const currentTheme = Colors["light"];
+    const systemScheme = useColorScheme() ?? "light";
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
     const router = useRouter();
-
     const isExpanded = useSharedValue(0);
+
+    useEffect(() => {
+        const syncTheme = async () => {
+            const storedTheme = await SecureStore.getItemAsync("themePreference");
+            if (storedTheme === "light" || storedTheme === "dark") {
+                setActiveMode(storedTheme);
+            } else {
+                setActiveMode(systemScheme);
+            }
+        };
+
+        syncTheme();
+
+        const subscription = DeviceEventEmitter.addListener("themeChanged", (mode) => {
+            if (mode === "light" || mode === "dark") {
+                setActiveMode(mode);
+            } else {
+                setActiveMode(systemScheme);
+            }
+        });
+
+        return () => subscription.remove();
+    }, [systemScheme, state.index]);
+
+    const currentTheme = Colors[activeMode];
 
     const toggleFab = () => {
         isExpanded.value = withTiming(isExpanded.value === 0 ? 1 : 0, { duration: 200 });
     };
 
     const mainFabBgStyle = useAnimatedStyle(() => ({
-        backgroundColor: interpolateColor(isExpanded.value, [0, 1], [currentTheme.primary as string, "#FFFFFF"]),
+        backgroundColor: interpolateColor(
+            isExpanded.value,
+            [0, 1],
+            [currentTheme.primary as string, activeMode === "dark" ? "#1F325C" : "#FFFFFF"],
+        ),
         transform: [{ scale: interpolate(isExpanded.value, [0, 0.5, 1], [1, 0.9, 1]) }],
     }));
 
@@ -79,7 +109,12 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
         <View style={styles.container} pointerEvents="box-none">
             <View style={styles.svgWrapper} pointerEvents="none">
                 <Svg width={width} height={TAB_BAR_HEIGHT} style={styles.shadow}>
-                    <Path d={path} fill="#FFFFFF" stroke={currentTheme.border} strokeWidth={1} />
+                    <Path
+                        d={path}
+                        fill={activeMode === "dark" ? "#1A1A1E" : "#FFFFFF"}
+                        stroke={currentTheme.border}
+                        strokeWidth={1}
+                    />
                 </Svg>
             </View>
 
@@ -90,7 +125,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
                     }
 
                     const isFocused = state.index === index;
-                    const tintColor = isFocused ? currentTheme.primary : "#A0A0A0";
+                    const tintColor = isFocused ? currentTheme.primary : activeMode === "dark" ? "#666666" : "#A0A0A0";
 
                     const onPress = () => {
                         const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
@@ -163,7 +198,15 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
                             <AntDesign name="plus" size={22} color="#FFF" />
                         </Animated.View>
                         <Animated.View style={closeIconStyle}>
-                            <AntDesign name="close" size={22} color="#000" />
+                            <Animated.Text
+                                style={{
+                                    color: activeMode === "dark" ? "#FFF" : "#000",
+                                    fontSize: 22,
+                                    fontWeight: "300",
+                                }}
+                            >
+                                ×
+                            </Animated.Text>
                         </Animated.View>
                     </TouchableOpacity>
                 </Animated.View>
@@ -190,14 +233,13 @@ const styles = StyleSheet.create({
     shadow: {
         shadowColor: "#000",
         shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 5,
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
         elevation: 5,
     },
     tabsWrapper: { flexDirection: "row", height: TAB_BAR_HEIGHT, paddingHorizontal: 5 },
     tabItem: { flex: 1, justifyContent: "center", alignItems: "center", paddingVertical: 10 },
     tabLabel: { fontSize: 10, fontWeight: "600", marginTop: 4 },
-
     fabContainer: {
         position: "absolute",
         bottom: 40,
@@ -205,11 +247,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-
     mainFab: {
         width: 54,
         height: 54,
-        borderRadius: 54,
+        borderRadius: 27,
         elevation: 8,
         shadowColor: "#2B78FF",
         shadowOffset: { width: 0, height: 4 },
@@ -222,7 +263,7 @@ const styles = StyleSheet.create({
     smallFab: {
         width: 44,
         height: 44,
-        borderRadius: 44,
+        borderRadius: 22,
         justifyContent: "center",
         alignItems: "center",
         elevation: 5,

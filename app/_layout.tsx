@@ -37,6 +37,7 @@ export default function RootLayout() {
                 } 
                 setInitialRoute("/onboarding");
             } catch (error) {
+                console.error("Error on INTROSPECT:", error)
                 setInitialRoute("/onboarding");
             } finally {
                 setIsReady(true); 

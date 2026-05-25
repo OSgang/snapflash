@@ -1,40 +1,59 @@
-import { useState, useEffect } from "react";
-import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, Linking, Modal, TextInput } from "react-native";
-import { MaterialCommunityIcons, AntDesign, Feather, Ionicons } from "@expo/vector-icons";
+import { useState, useCallback } from "react";
+import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, Linking, Modal, TextInput, DeviceEventEmitter } from "react-native";
+import { MaterialCommunityIcons, Feather, Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
-import { useRouter } from "expo-router";
-import CustomSwitch from "@/components/CustomSwitch";
+import { useRouter, useFocusEffect } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import MainLayout from "@/components/MainLayout";
 import { AuthService } from "@/services/AuthService";
 import * as SecureStore from "expo-secure-store";
 
+type ThemePref = "light" | "dark" | "auto";
+
 export default function SettingsScreen() {
-    const currentTheme = Colors[useColorScheme() ?? "light"];
+    const systemScheme = useColorScheme() ?? "light";
     const router = useRouter();
-    const [isDarkMode, setIsDarkMode] = useState(false);
+
+    const [themePreference, setThemePreference] = useState<ThemePref>("auto");
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
+
     const [dailyGoal, setDailyGoal] = useState("20");
     const [username, setUsername] = useState("Đậu Minh Khôi");
     const [isGoalModalVisible, setIsGoalModalVisible] = useState(false);
     const [tempGoal, setTempGoal] = useState("");
 
-    useEffect(() => {
-        const loadSettings = async () => {
-            try {
-                const storedGoal = await SecureStore.getItemAsync("dailyGoal");
-                const storedDarkMode = await SecureStore.getItemAsync("isDarkMode");
-                const storedUsername = await SecureStore.getItemAsync("username");
+    useFocusEffect(
+        useCallback(() => {
+            const loadSettings = async () => {
+                try {
+                    const storedGoal = await SecureStore.getItemAsync("dailyGoal");
+                    const storedTheme = ((await SecureStore.getItemAsync("themePreference")) as ThemePref) || "auto";
+                    const storedUsername = await SecureStore.getItemAsync("username");
 
-                if (storedGoal) setDailyGoal(storedGoal);
-                if (storedDarkMode) setIsDarkMode(storedDarkMode === "true");
-                if (storedUsername) setUsername(storedUsername);
-            } catch (error) {
-                console.log("Error loading config:", error);
-            }
-        };
+                    if (storedGoal) setDailyGoal(storedGoal);
+                    setThemePreference(storedTheme);
+                    setActiveMode(storedTheme === "auto" ? systemScheme : storedTheme);
+                    if (storedUsername) setUsername(storedUsername);
+                } catch (error) {
+                    console.log("Error loading config:", error);
+                }
+            };
+            loadSettings();
+        }, [systemScheme]),
+    );
 
-        loadSettings();
-    }, []);
+    const handleThemeChange = async (mode: ThemePref) => {
+        setThemePreference(mode);
+        setActiveMode(mode === "auto" ? systemScheme : mode);
+        try {
+            await SecureStore.setItemAsync("themePreference", mode);
+            DeviceEventEmitter.emit("themeChanged", mode);
+        } catch (error) {
+            console.log("Error saving theme preference:", error);
+        }
+    };
+
+    const currentTheme = Colors[activeMode];
 
     const openWikiLink = () => {
         Linking.openURL("https://github.com/OSgang/snapflash/wiki");
@@ -55,15 +74,6 @@ export default function SettingsScreen() {
             }
         }
         setIsGoalModalVisible(false);
-    };
-
-    const handleToggleDarkMode = async (value: boolean) => {
-        setIsDarkMode(value);
-        try {
-            await SecureStore.setItemAsync("isDarkMode", String(value));
-        } catch (error) {
-            console.log("Error Dark Mode:", error);
-        }
     };
 
     const handleLogout = async () => {
@@ -96,12 +106,11 @@ export default function SettingsScreen() {
         onPress,
         showBorder = true,
         isExternal = false,
-        customOpacity = 0.4,
     }: any) => (
         <TouchableOpacity
             style={[styles.menuItem, showBorder && { borderBottomWidth: 1, borderBottomColor: currentTheme.border }]}
             onPress={onPress}
-            activeOpacity={customOpacity}
+            activeOpacity={onPress ? 0.4 : 1}
         >
             <View style={styles.menuLeft}>
                 <View style={[styles.iconWrapper, { backgroundColor: iconBgColor }]}>{icon}</View>
@@ -132,7 +141,6 @@ export default function SettingsScreen() {
                     <Text style={[styles.profileName, { color: currentTheme.mainText }]}>{username}</Text>
                     <Text style={[styles.profileEmail, { color: currentTheme.subText }]}>Active Account</Text>
                 </View>
-
                 <View style={styles.editProfileBtn}>
                     <Feather name="edit-3" size={18} color={currentTheme.primary} />
                 </View>
@@ -157,18 +165,40 @@ export default function SettingsScreen() {
             </SettingGroup>
 
             <SettingGroup title="GENERAL">
-                <SettingItem
-                    title="Dark Mode"
-                    icon={<Ionicons name="moon-outline" size={20} color="#5E5CE6" />}
-                    iconBgColor="#F2F2F7"
-                    rightComponent={
-                        <View pointerEvents="none">
-                            <CustomSwitch value={isDarkMode} onValueChange={() => {}} />
+                <View style={[styles.menuItem, { borderBottomWidth: 1, borderBottomColor: currentTheme.border }]}>
+                    <View style={styles.menuLeft}>
+                        <View style={[styles.iconWrapper, { backgroundColor: "#F2F2F7" }]}>
+                            <Ionicons name="moon-outline" size={20} color="#5E5CE6" />
                         </View>
-                    }
-                    onPress={() => handleToggleDarkMode(!isDarkMode)}
-                    customOpacity={1}
-                />
+                        <Text style={[styles.menuText, { color: currentTheme.mainText }]}>Dark Mode</Text>
+                    </View>
+                    <View style={[styles.segmentedControl, { backgroundColor: currentTheme.border + "40" }]}>
+                        {(["light", "dark", "auto"] as const).map((mode) => (
+                            <TouchableOpacity
+                                key={mode}
+                                style={[
+                                    styles.segmentedButton,
+                                    themePreference === mode && { backgroundColor: currentTheme.white, elevation: 2 },
+                                ]}
+                                onPress={() => handleThemeChange(mode)}
+                            >
+                                <Text
+                                    style={[
+                                        styles.segmentedText,
+                                        {
+                                            color:
+                                                themePreference === mode ? currentTheme.primary : currentTheme.subText,
+                                            fontWeight: themePreference === mode ? "bold" : "500",
+                                        },
+                                    ]}
+                                >
+                                    {mode === "light" ? "Light" : mode === "dark" ? "Dark" : "Auto"}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </View>
+
                 <SettingItem
                     title="App Language"
                     icon={<Ionicons name="language-outline" size={20} color="#009688" />}
@@ -207,75 +237,21 @@ export default function SettingsScreen() {
                 />
             </SettingGroup>
 
-            <SettingGroup title="DATA & STORAGE">
-                <SettingItem
-                    title="Clear Cache"
-                    icon={<Feather name="trash-2" size={20} color="#795548" />}
-                    iconBgColor="#EFEBE9"
-                    rightComponent={<Text style={{ color: currentTheme.subText }}>24.5 MB</Text>}
-                    onPress={() => {}}
-                />
-                <SettingItem
-                    title="Export Data (.csv)"
-                    icon={<Feather name="download" size={20} color="#FF5722" />}
-                    iconBgColor="#FBE9E7"
-                    onPress={() => {}}
-                    showBorder={false}
-                />
-            </SettingGroup>
-
-            <SettingGroup title="SUPPORT">
-                <SettingItem
-                    title="Help Center"
-                    icon={<Ionicons name="help-buoy-outline" size={20} color="#32ADE6" />}
-                    iconBgColor="#E5F6FD"
-                    isExternal={true}
-                    onPress={openWikiLink}
-                />
-                <SettingItem
-                    title="Rate SnapFlash"
-                    icon={<AntDesign name="star" size={20} color="#FFCC00" />}
-                    iconBgColor="#FFF9E5"
-                    isExternal={true}
-                    onPress={openWikiLink}
-                    showBorder={false}
-                />
-            </SettingGroup>
-
             <View style={styles.logoutContainer}>
-                <TouchableOpacity
-                    style={[styles.logoutBtn, { backgroundColor: "#FFE5EB" }]}
-                    onPress={handleLogout}
-                    activeOpacity={0.4}
-                >
+                <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: "#FFE5EB" }]} onPress={handleLogout}>
                     <Feather name="log-out" size={20} color="#FF2D55" />
                     <Text style={styles.logoutText}>Log Out</Text>
                 </TouchableOpacity>
-
                 <View style={styles.footerInfo}>
                     <Text style={styles.appVersion}>SnapFlash v1.0.0</Text>
                     <Text style={styles.copyrightText}>Copyright © 2026 OS Gang Team.</Text>
-                    <Text style={styles.copyrightText}>All rights reserved.</Text>
                 </View>
             </View>
 
-            <Modal
-                visible={isGoalModalVisible}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setIsGoalModalVisible(false)}
-            >
+            <Modal visible={isGoalModalVisible} transparent={true} animationType="fade">
                 <View style={styles.alertOverlay}>
                     <View style={[styles.alertBox, { backgroundColor: currentTheme.white }]}>
-                        <View style={[styles.alertIconBg, { backgroundColor: "rgba(255, 152, 0, 0.1)" }]}>
-                            <Ionicons name="flag" size={32} color="#FF9800" />
-                        </View>
-
                         <Text style={[styles.alertTitle, { color: currentTheme.mainText }]}>Set Daily Goal</Text>
-                        <Text style={[styles.alertMessage, { color: currentTheme.subText }]}>
-                            How many words do you want to learn per day?
-                        </Text>
-
                         <TextInput
                             style={[
                                 styles.goalInput,
@@ -290,23 +266,19 @@ export default function SettingsScreen() {
                             keyboardType="numeric"
                             maxLength={3}
                             textAlign="center"
-                            selectionColor={currentTheme.primary}
                         />
-
                         <View style={styles.alertBtnRow}>
                             <TouchableOpacity
                                 style={[styles.alertBtn, { backgroundColor: currentTheme.background }]}
                                 onPress={() => setIsGoalModalVisible(false)}
-                                activeOpacity={0.7}
                             >
-                                <Text style={[styles.alertBtnText, { color: currentTheme.subText }]}>Cancel</Text>
+                                <Text style={{ color: currentTheme.subText }}>Cancel</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.alertBtn, { backgroundColor: currentTheme.primary }]}
                                 onPress={handleSaveGoal}
-                                activeOpacity={0.7}
                             >
-                                <Text style={[styles.alertBtnText, { color: "#FFF" }]}>Save</Text>
+                                <Text style={{ color: "#FFF" }}>Save</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -325,11 +297,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: 20,
         marginBottom: 30,
-        elevation: 2,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 5,
     },
     avatar: {
         width: 56,
@@ -342,24 +309,10 @@ const styles = StyleSheet.create({
     avatarText: { color: "#FFF", fontSize: 24, fontWeight: "bold" },
     profileName: { fontSize: 18, fontWeight: "bold", marginBottom: 4 },
     profileEmail: { fontSize: 13 },
-    editProfileBtn: {
-        padding: 8,
-        backgroundColor: "rgba(43, 120, 255, 0.1)",
-        borderRadius: 12,
-    },
+    editProfileBtn: { padding: 8, backgroundColor: "rgba(43, 120, 255, 0.1)", borderRadius: 12 },
     groupContainer: { marginBottom: 25 },
-    groupTitle: {
-        fontSize: 13,
-        fontWeight: "700",
-        marginLeft: 15,
-        marginBottom: 8,
-        letterSpacing: 0.5,
-    },
-    groupBlock: {
-        borderWidth: 1,
-        borderRadius: 20,
-        overflow: "hidden",
-    },
+    groupTitle: { fontSize: 13, fontWeight: "700", marginLeft: 15, marginBottom: 8, letterSpacing: 0.5 },
+    groupBlock: { borderWidth: 1, borderRadius: 20, overflow: "hidden" },
     menuItem: {
         flexDirection: "row",
         alignItems: "center",
@@ -377,10 +330,7 @@ const styles = StyleSheet.create({
         marginRight: 14,
     },
     menuText: { fontSize: 16, fontWeight: "500" },
-    logoutContainer: {
-        marginTop: 10,
-        alignItems: "center",
-    },
+    logoutContainer: { marginTop: 10, alignItems: "center" },
     logoutBtn: {
         flexDirection: "row",
         alignItems: "center",
@@ -392,83 +342,16 @@ const styles = StyleSheet.create({
         marginBottom: 25,
     },
     logoutText: { color: "#FF2D55", fontSize: 16, fontWeight: "bold" },
-    footerInfo: {
-        alignItems: "center",
-        gap: 4,
-    },
-    appVersion: {
-        fontSize: 13,
-        color: "#666",
-        fontWeight: "700",
-        marginBottom: 2,
-    },
-    copyrightText: {
-        fontSize: 11,
-        color: "#999",
-        fontWeight: "500",
-    },
-    alertOverlay: {
-        flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.4)",
-        justifyContent: "center",
-        alignItems: "center",
-        paddingHorizontal: 20,
-    },
-    alertBox: {
-        width: "85%",
-        borderRadius: 24,
-        padding: 24,
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.15,
-        shadowRadius: 20,
-        elevation: 10,
-    },
-    alertIconBg: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 16,
-    },
-    alertTitle: {
-        fontSize: 20,
-        fontWeight: "bold",
-        marginBottom: 8,
-        textAlign: "center",
-    },
-    alertMessage: {
-        fontSize: 15,
-        textAlign: "center",
-        marginBottom: 24,
-        lineHeight: 22,
-    },
-    goalInput: {
-        width: "100%",
-        height: 56,
-        borderWidth: 1,
-        borderRadius: 14,
-        fontSize: 20,
-        fontWeight: "bold",
-        marginBottom: 24,
-    },
-    alertBtnRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        width: "100%",
-        gap: 12,
-    },
-    alertBtn: {
-        flex: 1,
-        height: 50,
-        borderRadius: 14,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    alertBtnText: {
-        fontSize: 16,
-        fontWeight: "bold",
-    },
+    footerInfo: { alignItems: "center", gap: 4 },
+    appVersion: { fontSize: 13, color: "#666", fontWeight: "700" },
+    copyrightText: { fontSize: 11, color: "#999" },
+    alertOverlay: { flex: 1, backgroundColor: "rgba(0, 0, 0, 0.4)", justifyContent: "center", alignItems: "center" },
+    alertBox: { width: "85%", borderRadius: 24, padding: 24, alignItems: "center" },
+    alertTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 15 },
+    goalInput: { width: "100%", height: 50, borderWidth: 1, borderRadius: 12, fontSize: 18, marginBottom: 20 },
+    alertBtnRow: { flexDirection: "row", gap: 12, width: "100%" },
+    alertBtn: { flex: 1, height: 46, borderRadius: 12, justifyContent: "center", alignItems: "center" },
+    segmentedControl: { flexDirection: "row", padding: 2, borderRadius: 10, width: 180 },
+    segmentedButton: { flex: 1, paddingVertical: 6, alignItems: "center", borderRadius: 8 },
+    segmentedText: { fontSize: 12 },
 });

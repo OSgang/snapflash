@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, useColorScheme, Animated } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { View, Text, StyleSheet, useColorScheme, Animated, DeviceEventEmitter } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { Colors } from "@/constants/theme";
+import * as SecureStore from "expo-secure-store";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -13,7 +14,47 @@ interface LearningPipelineProps {
 }
 
 export default function LearningPipeline({ mastered, learning, newWords, retentionRate }: LearningPipelineProps) {
-    const currentTheme = Colors[useColorScheme() ?? "light"];
+    const systemScheme = useColorScheme() ?? "light";
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
+
+    useEffect(() => {
+        const syncTheme = async () => {
+            const storedTheme =
+                await SecureStore.getItemAsync(
+                    "themePreference"
+                );
+
+            if (
+                storedTheme === "light" ||
+                storedTheme === "dark"
+            ) {
+                setActiveMode(storedTheme);
+            } else {
+                setActiveMode(systemScheme);
+            }
+        };
+
+        syncTheme();
+
+        const subscription = DeviceEventEmitter.addListener(
+            "themeChanged",
+            (mode) => {
+                if (
+                    mode === "light" ||
+                    mode === "dark"
+                ) {
+                    setActiveMode(mode);
+                } else {
+                    setActiveMode(systemScheme);
+                }
+            }
+        );
+
+        return () => subscription.remove();
+    }, [systemScheme]);
+
+    const currentTheme = Colors[activeMode];
+
     const total = mastered + learning + newWords;
 
     const radius = 40;

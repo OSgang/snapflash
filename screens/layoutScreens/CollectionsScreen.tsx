@@ -1,20 +1,30 @@
-import { useState, useEffect } from "react";
-import { 
-    View, Text, StyleSheet, ScrollView, useColorScheme, 
-    TouchableOpacity, TextInput, ActivityIndicator, Modal, Alert 
+import { useState, useCallback } from "react";
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    useColorScheme,
+    TouchableOpacity,
+    TextInput,
+    ActivityIndicator,
+    Modal,
+    Alert,
 } from "react-native";
 import { Colors } from "@/constants/theme";
 import DeckCard from "@/components/DeckCard";
 import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import MainLayout from "@/components/MainLayout";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { DeckService } from "@/services/DeckService";
 import { formatTimeAgo } from "@/services/date";
+import * as SecureStore from "expo-secure-store";
 
 const CATEGORIES = ["All", "Recent", "Starred", "Languages", "Science"];
 
 export default function CollectionsScreen() {
-    const currentTheme = Colors[useColorScheme() ?? "light"];
+    const systemScheme = useColorScheme() ?? "light";
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
     const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState("All");
     const router = useRouter();
@@ -30,8 +40,17 @@ export default function CollectionsScreen() {
     const fetchDecks = async () => {
         try {
             setIsLoading(true);
-            const data = await DeckService.getAllDecks();
+            const [data, storedTheme] = await Promise.all([
+                DeckService.getAllDecks(),
+                SecureStore.getItemAsync("themePreference"),
+            ]);
             setDecks(data || []);
+
+            if (storedTheme === "light" || storedTheme === "dark") {
+                setActiveMode(storedTheme);
+            } else {
+                setActiveMode(systemScheme);
+            }
         } catch (error) {
             console.log("Error while loading decks: ", error);
         } finally {
@@ -39,9 +58,14 @@ export default function CollectionsScreen() {
         }
     };
 
-    useEffect(() => {
-        fetchDecks();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            fetchDecks();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [systemScheme]),
+    );
+
+    const currentTheme = Colors[activeMode];
 
     const toggleExpand = (id: string) => {
         setExpandedCardId(expandedCardId === id ? null : id);
@@ -72,9 +96,9 @@ export default function CollectionsScreen() {
         <MainLayout>
             <View style={styles.headerRow}>
                 <Text style={[styles.headerTitle, { color: currentTheme.mainText }]}>Collections</Text>
-                
-                <TouchableOpacity 
-                    style={[styles.addBtn, { backgroundColor: currentTheme.primary + '35' }]}
+
+                <TouchableOpacity
+                    style={[styles.addBtn, { backgroundColor: currentTheme.primary + "35" }]}
                     activeOpacity={0.7}
                     onPress={() => setIsCreateModalVisible(true)}
                 >
@@ -82,7 +106,12 @@ export default function CollectionsScreen() {
                 </TouchableOpacity>
             </View>
 
-            <View style={[styles.searchContainer, { backgroundColor: currentTheme.white, borderColor: currentTheme.border }]}>
+            <View
+                style={[
+                    styles.searchContainer,
+                    { backgroundColor: currentTheme.white, borderColor: currentTheme.border },
+                ]}
+            >
                 <Feather name="search" size={20} color={currentTheme.subText} />
                 <TextInput
                     placeholder="Search your decks"
@@ -103,7 +132,12 @@ export default function CollectionsScreen() {
                             },
                         ]}
                     >
-                        <Text style={[styles.categoryText, { color: selectedCategory === cat ? "#FFF" : currentTheme.mainText }]}>
+                        <Text
+                            style={[
+                                styles.categoryText,
+                                { color: selectedCategory === cat ? "#FFF" : currentTheme.mainText },
+                            ]}
+                        >
                             {cat}
                         </Text>
                     </TouchableOpacity>
@@ -140,8 +174,17 @@ export default function CollectionsScreen() {
                                             });
                                         }}
                                     >
-                                        <View style={[styles.iconCircle, { backgroundColor: currentTheme.tagBlueBg as string }]}>
-                                            <MaterialCommunityIcons name="eye-outline" size={18} color={currentTheme.primary} />
+                                        <View
+                                            style={[
+                                                styles.iconCircle,
+                                                { backgroundColor: currentTheme.tagBlueBg as string },
+                                            ]}
+                                        >
+                                            <MaterialCommunityIcons
+                                                name="eye-outline"
+                                                size={18}
+                                                color={currentTheme.primary}
+                                            />
                                         </View>
                                         <Text style={[styles.menuText, { color: currentTheme.mainText }]}>View</Text>
                                     </TouchableOpacity>
@@ -155,15 +198,29 @@ export default function CollectionsScreen() {
                                             });
                                         }}
                                     >
-                                        <View style={[styles.iconCircle, { backgroundColor: currentTheme.tagGreenBg as string }]}>
+                                        <View
+                                            style={[
+                                                styles.iconCircle,
+                                                { backgroundColor: currentTheme.tagGreenBg as string },
+                                            ]}
+                                        >
                                             <MaterialCommunityIcons name="pencil-outline" size={18} color="#27AE60" />
                                         </View>
                                         <Text style={[styles.menuText, { color: currentTheme.mainText }]}>Edit</Text>
                                     </TouchableOpacity>
 
                                     <TouchableOpacity style={styles.menuItem}>
-                                        <View style={[styles.iconCircle, { backgroundColor: currentTheme.tagRedBg as string }]}>
-                                            <MaterialCommunityIcons name="trash-can-outline" size={18} color="#EB5757" />
+                                        <View
+                                            style={[
+                                                styles.iconCircle,
+                                                { backgroundColor: currentTheme.tagRedBg as string },
+                                            ]}
+                                        >
+                                            <MaterialCommunityIcons
+                                                name="trash-can-outline"
+                                                size={18}
+                                                color="#EB5757"
+                                            />
                                         </View>
                                         <Text style={[styles.menuText, { color: currentTheme.mainText }]}>Delete</Text>
                                     </TouchableOpacity>
@@ -183,9 +240,12 @@ export default function CollectionsScreen() {
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: currentTheme.white }]}>
                         <Text style={[styles.modalTitle, { color: currentTheme.mainText }]}>Create new deck</Text>
-                        
+
                         <TextInput
-                            style={[styles.modalInput, { color: currentTheme.mainText, borderColor: currentTheme.border }]}
+                            style={[
+                                styles.modalInput,
+                                { color: currentTheme.mainText, borderColor: currentTheme.border },
+                            ]}
                             placeholder="Deck name"
                             placeholderTextColor={currentTheme.subText}
                             value={newDeckName}
@@ -193,7 +253,10 @@ export default function CollectionsScreen() {
                         />
 
                         <TextInput
-                            style={[styles.modalInput, { color: currentTheme.mainText, borderColor: currentTheme.border, height: 80 }]}
+                            style={[
+                                styles.modalInput,
+                                { color: currentTheme.mainText, borderColor: currentTheme.border, height: 80 },
+                            ]}
                             placeholder="Deck description"
                             placeholderTextColor={currentTheme.subText}
                             value={newDeckDesc}
@@ -203,7 +266,7 @@ export default function CollectionsScreen() {
                         />
 
                         <View style={styles.modalActionRow}>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={[styles.modalBtn, { backgroundColor: "transparent" }]}
                                 onPress={() => setIsCreateModalVisible(false)}
                                 disabled={isCreating}
@@ -211,8 +274,11 @@ export default function CollectionsScreen() {
                                 <Text style={[styles.modalBtnText, { color: currentTheme.subText }]}>Cancel</Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity 
-                                style={[styles.modalBtn, { backgroundColor: currentTheme.primary, opacity: isCreating ? 0.7 : 1 }]}
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalBtn,
+                                    { backgroundColor: currentTheme.primary, opacity: isCreating ? 0.7 : 1 },
+                                ]}
                                 onPress={handleCreateDeck}
                                 disabled={isCreating}
                             >
@@ -226,29 +292,14 @@ export default function CollectionsScreen() {
                     </View>
                 </View>
             </Modal>
-
         </MainLayout>
     );
 }
 
 const styles = StyleSheet.create({
-    headerRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 20,
-    },
-    headerTitle: { 
-        fontSize: 36, 
-        fontWeight: "900", 
-    },
-    addBtn: {
-        width: 44,
-        height: 44,
-        borderRadius: 12,
-        justifyContent: "center",
-        alignItems: "center",
-    },
+    headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+    headerTitle: { fontSize: 36, fontWeight: "900" },
+    addBtn: { width: 44, height: 44, borderRadius: 12, justifyContent: "center", alignItems: "center" },
     searchContainer: {
         flexDirection: "row",
         alignItems: "center",
@@ -259,11 +310,7 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     searchInput: { flex: 1, marginLeft: 10, fontSize: 16 },
-    categoriesScroll: { 
-        marginBottom: 20, 
-        flexDirection: "row",
-        paddingBottom: 8,
-    },
+    categoriesScroll: { marginBottom: 20, flexDirection: "row", paddingBottom: 8 },
     categoryChip: {
         paddingHorizontal: 18,
         paddingVertical: 8,
@@ -277,11 +324,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     categoryText: { fontSize: 14, fontWeight: "600" },
-    quickAccessMenu: {
-        flexDirection: "row",
-        justifyContent: "space-around",
-        alignItems: "center",
-    },
+    quickAccessMenu: { flexDirection: "row", justifyContent: "space-around", alignItems: "center" },
     menuItem: { alignItems: "center", gap: 6 },
     iconCircle: { width: 36, height: 36, borderRadius: 18, justifyContent: "center", alignItems: "center" },
     menuText: { fontSize: 12, fontWeight: "600" },
@@ -302,25 +345,9 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 4,
     },
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: "bold",
-        marginBottom: 20,
-        textAlign: "center",
-    },
-    modalInput: {
-        borderWidth: 1,
-        borderRadius: 12,
-        padding: 15,
-        fontSize: 16,
-        marginBottom: 15,
-    },
-    modalActionRow: {
-        flexDirection: "row",
-        justifyContent: "flex-end",
-        gap: 10,
-        marginTop: 10,
-    },
+    modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
+    modalInput: { borderWidth: 1, borderRadius: 12, padding: 15, fontSize: 16, marginBottom: 15 },
+    modalActionRow: { flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 10 },
     modalBtn: {
         paddingVertical: 12,
         paddingHorizontal: 20,
@@ -329,8 +356,5 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    modalBtnText: {
-        fontSize: 16,
-        fontWeight: "bold",
-    },
+    modalBtnText: { fontSize: 16, fontWeight: "bold" },
 });
