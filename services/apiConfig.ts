@@ -14,16 +14,14 @@ const getLocalApiUrl = () => {
 
 const LOCAL_URL = getLocalApiUrl();
 
-const PROD_URL = "https://api.snapflash.app";
+const PROD_URL = "https://snapflash-backend.onrender.com";
 
-console.log(LOCAL_URL);
-
-const BASE_URL = __DEV__ ? LOCAL_URL : PROD_URL;
+const BASE_URL = PROD_URL;
 
 // eslint-disable-next-line import/no-named-as-default-member
 const apiClient = axios.create({
     baseURL: BASE_URL,
-    timeout: 10000,
+    timeout: 30000,
     headers: {
         "Content-Type": "application/json",
     },

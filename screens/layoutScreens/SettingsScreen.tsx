@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, Linking, Modal, TextInput } from "react-native";
 import { MaterialCommunityIcons, AntDesign, Feather, Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
@@ -7,17 +7,34 @@ import CustomSwitch from "@/components/CustomSwitch";
 import { LinearGradient } from "expo-linear-gradient";
 import MainLayout from "@/components/MainLayout";
 import { AuthService } from "@/services/AuthService";
+import * as SecureStore from "expo-secure-store";
 
 export default function SettingsScreen() {
     const currentTheme = Colors[useColorScheme() ?? "light"];
     const router = useRouter();
-
     const [isDarkMode, setIsDarkMode] = useState(false);
-    
-    // States quản lý Daily Goal
     const [dailyGoal, setDailyGoal] = useState("20");
+    const [username, setUsername] = useState("Đậu Minh Khôi");
     const [isGoalModalVisible, setIsGoalModalVisible] = useState(false);
     const [tempGoal, setTempGoal] = useState("");
+
+    useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const storedGoal = await SecureStore.getItemAsync("dailyGoal");
+                const storedDarkMode = await SecureStore.getItemAsync("isDarkMode");
+                const storedUsername = await SecureStore.getItemAsync("username");
+
+                if (storedGoal) setDailyGoal(storedGoal);
+                if (storedDarkMode) setIsDarkMode(storedDarkMode === "true");
+                if (storedUsername) setUsername(storedUsername);
+            } catch (error) {
+                console.log("Error loading config:", error);
+            }
+        };
+
+        loadSettings();
+    }, []);
 
     const openWikiLink = () => {
         Linking.openURL("https://github.com/OSgang/snapflash/wiki");
@@ -28,22 +45,37 @@ export default function SettingsScreen() {
         setIsGoalModalVisible(true);
     };
 
-    const handleSaveGoal = () => {
+    const handleSaveGoal = async () => {
         if (tempGoal.trim() !== "") {
             setDailyGoal(tempGoal);
+            try {
+                await SecureStore.setItemAsync("dailyGoal", tempGoal.trim());
+            } catch (error) {
+                console.log("Lỗi lưu mục tiêu hằng ngày:", error);
+            }
         }
         setIsGoalModalVisible(false);
     };
 
+    const handleToggleDarkMode = async (value: boolean) => {
+        setIsDarkMode(value);
+        try {
+            await SecureStore.setItemAsync("isDarkMode", String(value));
+        } catch (error) {
+            console.log("Error Dark Mode:", error);
+        }
+    };
+
     const handleLogout = async () => {
         try {
-            await AuthService.logout()
+            await AuthService.logout();
         } catch (error) {
-            console.error("Error in LOGOUT:", error)
+            console.error("Error in LOGOUT:", error);
         } finally {
-            router.navigate("/login")
+            await SecureStore.deleteItemAsync("username");
+            router.replace("/login");
         }
-    }
+    };
 
     const SettingGroup = ({ title, children }: any) => (
         <View style={styles.groupContainer}>
@@ -94,13 +126,13 @@ export default function SettingsScreen() {
                 activeOpacity={0.4}
             >
                 <LinearGradient colors={["#2B78FF", "#5AB0FF"]} style={styles.avatar}>
-                    <Text style={styles.avatarText}>K</Text>
+                    <Text style={styles.avatarText}>{username.charAt(0).toUpperCase()}</Text>
                 </LinearGradient>
                 <View style={{ flex: 1 }}>
-                    <Text style={[styles.profileName, { color: currentTheme.mainText }]}>Đậu Minh Khôi</Text>
-                    <Text style={[styles.profileEmail, { color: currentTheme.subText }]}>khoidau@gmail.com</Text>
+                    <Text style={[styles.profileName, { color: currentTheme.mainText }]}>{username}</Text>
+                    <Text style={[styles.profileEmail, { color: currentTheme.subText }]}>Active Account</Text>
                 </View>
-                
+
                 <View style={styles.editProfileBtn}>
                     <Feather name="edit-3" size={18} color={currentTheme.primary} />
                 </View>
@@ -111,7 +143,9 @@ export default function SettingsScreen() {
                     title="Daily Goal"
                     icon={<Ionicons name="flag-outline" size={20} color="#FF9800" />}
                     iconBgColor="#FFF3E0"
-                    rightComponent={<Text style={{ color: currentTheme.subText, fontWeight: "600" }}>{dailyGoal} words</Text>}
+                    rightComponent={
+                        <Text style={{ color: currentTheme.subText, fontWeight: "600" }}>{dailyGoal} words</Text>
+                    }
                     onPress={handleOpenGoalModal}
                 />
                 <SettingItem
@@ -132,7 +166,7 @@ export default function SettingsScreen() {
                             <CustomSwitch value={isDarkMode} onValueChange={() => {}} />
                         </View>
                     }
-                    onPress={() => setIsDarkMode(!isDarkMode)}
+                    onPress={() => handleToggleDarkMode(!isDarkMode)}
                     customOpacity={1}
                 />
                 <SettingItem
@@ -233,21 +267,23 @@ export default function SettingsScreen() {
             >
                 <View style={styles.alertOverlay}>
                     <View style={[styles.alertBox, { backgroundColor: currentTheme.white }]}>
-                        {/* Icon Goal */}
                         <View style={[styles.alertIconBg, { backgroundColor: "rgba(255, 152, 0, 0.1)" }]}>
                             <Ionicons name="flag" size={32} color="#FF9800" />
                         </View>
-                        
+
                         <Text style={[styles.alertTitle, { color: currentTheme.mainText }]}>Set Daily Goal</Text>
                         <Text style={[styles.alertMessage, { color: currentTheme.subText }]}>
                             How many words do you want to learn per day?
                         </Text>
-                        
-                        {/* Ô nhập số */}
+
                         <TextInput
                             style={[
-                                styles.goalInput, 
-                                { color: currentTheme.mainText, borderColor: currentTheme.border, backgroundColor: currentTheme.background }
+                                styles.goalInput,
+                                {
+                                    color: currentTheme.mainText,
+                                    borderColor: currentTheme.border,
+                                    backgroundColor: currentTheme.background,
+                                },
                             ]}
                             value={tempGoal}
                             onChangeText={setTempGoal}
@@ -258,15 +294,15 @@ export default function SettingsScreen() {
                         />
 
                         <View style={styles.alertBtnRow}>
-                            <TouchableOpacity 
-                                style={[styles.alertBtn, { backgroundColor: currentTheme.background }]} 
+                            <TouchableOpacity
+                                style={[styles.alertBtn, { backgroundColor: currentTheme.background }]}
                                 onPress={() => setIsGoalModalVisible(false)}
                                 activeOpacity={0.7}
                             >
                                 <Text style={[styles.alertBtnText, { color: currentTheme.subText }]}>Cancel</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity 
-                                style={[styles.alertBtn, { backgroundColor: currentTheme.primary }]} 
+                            <TouchableOpacity
+                                style={[styles.alertBtn, { backgroundColor: currentTheme.primary }]}
                                 onPress={handleSaveGoal}
                                 activeOpacity={0.7}
                             >
@@ -371,7 +407,6 @@ const styles = StyleSheet.create({
         color: "#999",
         fontWeight: "500",
     },
-    
     alertOverlay: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.4)",
