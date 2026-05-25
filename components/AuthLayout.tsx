@@ -1,12 +1,43 @@
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from "react-native";
+import { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, DeviceEventEmitter } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import * as SecureStore from "expo-secure-store";
 import { Colors } from "@/constants/theme";
 
 export default function AuthLayout({ title, children }: { title: string; children: React.ReactNode }) {
     const router = useRouter();
-    const currentTheme = Colors[useColorScheme() ?? "light"];
+
+    const systemScheme = useColorScheme() ?? "light";
+
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
+
+    useEffect(() => {
+        const syncTheme = async () => {
+            const storedTheme = await SecureStore.getItemAsync("themePreference");
+
+            if (storedTheme === "light" || storedTheme === "dark") {
+                setActiveMode(storedTheme);
+            } else {
+                setActiveMode(systemScheme);
+            }
+        };
+
+        syncTheme();
+
+        const subscription = DeviceEventEmitter.addListener("themeChanged", (mode) => {
+            if (mode === "light" || mode === "dark") {
+                setActiveMode(mode);
+            } else {
+                setActiveMode(systemScheme);
+            }
+        });
+
+        return () => subscription.remove();
+    }, [systemScheme]);
+
+    const currentTheme = Colors[activeMode];
 
     return (
         <View style={{ flex: 1, backgroundColor: currentTheme.white }}>

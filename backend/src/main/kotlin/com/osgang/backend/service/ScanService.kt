@@ -6,11 +6,10 @@ import com.osgang.backend.exception.ErrorCode
 import net.sourceforge.tess4j.Tesseract
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.multipart.MultipartFile
-
+import java.awt.image.BufferedImage
 import java.io.File
+import javax.imageio.ImageIO
 
 @Service
 class ScanService (
@@ -19,24 +18,21 @@ class ScanService (
 ) {
     fun getCardCandidates(multipartFile: MultipartFile): Set<CardCandidateResponse> {
         val extractedCardCandidates: List<String> = this.extractOCR(multipartFile)
-
         val listOfCandidates: List<String> = this.cardCandidatesCuration(extractedCardCandidates)
 
         return listOfCandidates.mapNotNull {
             val candidateDefinition = dictionaryService.lookup(it)
             if (candidateDefinition.isNotEmpty()) {
-                 CardCandidateResponse(it.lowercase(), candidateDefinition)
+                CardCandidateResponse(it.lowercase(), candidateDefinition)
             } else {
                 null
             }
         }.toSet()
-
     }
 
     fun extractOCR(multipartFile: MultipartFile): List<String> {
-        val tempFile = File.createTempFile("ocr_temp", ".png")
+        val tempFile = File.createTempFile("ocr_temp", ".jpg") // ✅ .jpg thay vì .png
 
-        // Services like ScanService are Singletons by default. That means Spring only creates one instance of ScanService for the entire lifetime of your application. Create the Tesseract inside the function so every upload gets its own isolated engine
         val tesseract = Tesseract().apply {
             setDatapath(tesseractDataPath)
             setLanguage("eng")
@@ -45,8 +41,18 @@ class ScanService (
         return try {
             multipartFile.transferTo(tempFile)
 
+            // ✅ Load thành BufferedImage trước, bỏ qua format detection của Tess4j
+            val original: BufferedImage = ImageIO.read(tempFile)
+                ?: throw AppException(ErrorCode.SCAN__FAILED)
+
+            // ✅ Convert sang RGB để Tess4j OCR chuẩn xác hơn (bỏ alpha channel)
+            val rgbImage = BufferedImage(original.width, original.height, BufferedImage.TYPE_INT_RGB)
+            val g2d = rgbImage.createGraphics()
+            g2d.drawImage(original, 0, 0, null)
+            g2d.dispose()
+
             println("\uD83E\uDEC2 Extracting text from image...")
-            val extractedText = tesseract.doOCR(tempFile)
+            val extractedText = tesseract.doOCR(rgbImage)
                 .trim()
                 .split(Regex("[^a-zA-Z]+"))
 
@@ -66,10 +72,10 @@ class ScanService (
         numOfCandidates: Int = 15,
         minWordLength: Int = 3
     ): List<String> {
-        val wordAppearHistogram = hashMapOf<String, Int>()  // a var to keep track of the number of time each word appear
+        val wordAppearHistogram = hashMapOf<String, Int>()
 
         extractedCardCandidates.forEach {
-            if (it.length < minWordLength) { return@forEach }  // continue if the word length is < minWordLength
+            if (it.length < minWordLength) { return@forEach }
             if (it !in wordAppearHistogram) {
                 wordAppearHistogram[it] = 1
             } else {

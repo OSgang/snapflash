@@ -1,7 +1,9 @@
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, DeviceEventEmitter } from "react-native";
 import { MaterialCommunityIcons, AntDesign } from "@expo/vector-icons";
 import { Colors, SIZES } from "@/constants/theme";
 import Animated, { LinearTransition, FadeIn } from "react-native-reanimated";
+import { useEffect, useState } from "react";
+import * as SecureStore from "expo-secure-store"
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -26,7 +28,46 @@ export default function DeckCard({
     onPress,
     children,
 }: DeckCardProps) {
-    const currentTheme = Colors[useColorScheme() ?? "light"];
+    const systemScheme = useColorScheme() ?? "light";
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
+
+    useEffect(() => {
+        const syncTheme = async () => {
+            const storedTheme =
+                await SecureStore.getItemAsync(
+                    "themePreference"
+                );
+
+            if (
+                storedTheme === "light" ||
+                storedTheme === "dark"
+            ) {
+                setActiveMode(storedTheme);
+            } else {
+                setActiveMode(systemScheme);
+            }
+        };
+
+        syncTheme();
+
+        const subscription = DeviceEventEmitter.addListener(
+            "themeChanged",
+            (mode) => {
+                if (
+                    mode === "light" ||
+                    mode === "dark"
+                ) {
+                    setActiveMode(mode);
+                } else {
+                    setActiveMode(systemScheme);
+                }
+            }
+        );
+
+        return () => subscription.remove();
+    }, [systemScheme]);
+
+    const currentTheme = Colors[activeMode];
 
     return (
         <AnimatedTouchableOpacity

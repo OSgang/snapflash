@@ -1,10 +1,14 @@
-import { useState } from "react";
-import { View, Text, StyleSheet, useColorScheme, TouchableOpacity } from "react-native";
+import { useState, useCallback } from "react";
+import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, ActivityIndicator } from "react-native";
 import { MaterialCommunityIcons, FontAwesome5, Feather, Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
 import MainLayout from "@/components/MainLayout";
 import BarChart from "@/components/BarChart";
 import LearningPipeline from "@/components/LearningPipeline";
+import { CardService } from "@/services/CardService";
+import { StatsCacheService, ActivityStats } from "@/services/StatsCacheService";
+import * as SecureStore from "expo-secure-store";
+import { useFocusEffect } from "expo-router";
 
 type FilterType = "Today" | "Week" | "Month" | "Year";
 
@@ -36,26 +40,63 @@ const CHART_DATA_MOCK = {
     ],
 };
 
-const TOUGHEST_WORDS = [
-    { word: "Meticulous", collection: "IELTS Vocabulary", accuracy: "20%" },
-    { word: "Ephemeral", collection: "Daily Phrases", accuracy: "35%" },
-    { word: "Ubiquitous", collection: "Economics 101", accuracy: "45%" },
-];
-
 export default function InsightsScreen() {
-    const currentTheme = Colors[useColorScheme() ?? "light"];
+    const systemScheme = useColorScheme() ?? "light";
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
     const [filter, setFilter] = useState<FilterType>("Week");
-
-    const userGoal = 500;
+    const [toughestWords, setToughestWords] = useState<any[]>([]);
+    const [journeyStats, setJourneyStats] = useState({ mastered: 0, learning: 0 });
+    const [isLoading, setIsLoading] = useState(true);
+    const [localStats, setLocalStats] = useState<ActivityStats | null>(null);
+    const [dailyGoal, setDailyGoal] = useState(20);
 
     const stats = {
-        Today: { streak: 12, accuracy: 92, time: "25m", snap: 12, mastered: 5, learning: 10, new: 5 },
-        Week: { streak: 12, accuracy: 85, time: "2h 15m", snap: 150, mastered: 240, learning: 85, new: 75 },
-        Month: { streak: 12, accuracy: 78, time: "10h 40m", snap: 540, mastered: 450, learning: 120, new: 50 },
-        Year: { streak: 12, accuracy: 82, time: "124h", snap: 2350, mastered: 1850, learning: 420, new: 150 },
+        Today: { streak: 12, accuracy: 92, time: "25m", snap: 12, new: 5 },
+        Week: { streak: 12, accuracy: 85, time: "2h 15m", snap: 150, new: 75 },
+        Month: { streak: 12, accuracy: 78, time: "10h 40m", snap: 540, new: 50 },
+        Year: { streak: 12, accuracy: 82, time: "124h", snap: 2350, new: 150 },
     };
 
     const currentData = stats[filter];
+
+    useFocusEffect(
+        useCallback(() => {
+            const fetchInsights = async () => {
+                try {
+                    setIsLoading(true);
+                    const [wordsData, journeyData, cachedStats, storedGoal, storedTheme] = await Promise.all([
+                        CardService.getToughestWords(5),
+                        CardService.getLearningJourney(),
+                        StatsCacheService.getStats(),
+                        SecureStore.getItemAsync("dailyGoal"),
+                        SecureStore.getItemAsync("themePreference"),
+                    ]);
+
+                    setToughestWords(wordsData || []);
+                    setJourneyStats({
+                        mastered: journeyData?.mastered?.length || 0,
+                        learning: journeyData?.learning?.length || 0,
+                    });
+                    setLocalStats(cachedStats);
+
+                    if (storedGoal) setDailyGoal(parseInt(storedGoal));
+
+                    if (storedTheme === "light" || storedTheme === "dark") {
+                        setActiveMode(storedTheme);
+                    } else {
+                        setActiveMode(systemScheme);
+                    }
+                } catch (error) {
+                    console.log("Error loading insights:", error);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            fetchInsights();
+        }, [systemScheme]),
+    );
+
+    const currentTheme = Colors[activeMode];
 
     return (
         <MainLayout>
@@ -85,7 +126,6 @@ export default function InsightsScreen() {
                 ))}
             </View>
 
-            {/* 1. ACTIVITY METRICS */}
             <View style={styles.sectionHeader}>
                 <Text style={[styles.subTitle, { color: currentTheme.mainText }]}>Activity Metrics</Text>
             </View>
@@ -98,7 +138,9 @@ export default function InsightsScreen() {
                         ]}
                     >
                         <FontAwesome5 name="fire-alt" size={20} color="#FF9800" />
-                        <Text style={[styles.statValue, { color: currentTheme.mainText }]}>{currentData.streak}</Text>
+                        <Text style={[styles.statValue, { color: currentTheme.mainText }]}>
+                            {localStats?.streak || 0}
+                        </Text>
                         <Text style={[styles.statLabel, { color: currentTheme.subText }]}>Day Streak</Text>
                     </View>
                     <View
@@ -109,7 +151,7 @@ export default function InsightsScreen() {
                     >
                         <MaterialCommunityIcons name="target-account" size={22} color={currentTheme.primary} />
                         <Text style={[styles.statValue, { color: currentTheme.mainText }]}>
-                            {currentData.accuracy}%
+                            {localStats?.accuracy || 100}%
                         </Text>
                         <Text style={[styles.statLabel, { color: currentTheme.subText }]}>Accuracy</Text>
                     </View>
@@ -122,7 +164,9 @@ export default function InsightsScreen() {
                         ]}
                     >
                         <Feather name="clock" size={20} color="#4CAF50" />
-                        <Text style={[styles.statValue, { color: currentTheme.mainText }]}>{currentData.time}</Text>
+                        <Text style={[styles.statValue, { color: currentTheme.mainText }]}>
+                            {localStats?.timeSpentMins || 0}m
+                        </Text>
                         <Text style={[styles.statLabel, { color: currentTheme.subText }]}>Time Spent</Text>
                     </View>
                     <View
@@ -132,15 +176,17 @@ export default function InsightsScreen() {
                         ]}
                     >
                         <Ionicons name="camera-outline" size={22} color="#E91E63" />
-                        <Text style={[styles.statValue, { color: currentTheme.mainText }]}>{currentData.snap}</Text>
+                        <Text style={[styles.statValue, { color: currentTheme.mainText }]}>
+                            {localStats?.snapCreated || 0}
+                        </Text>
                         <Text style={[styles.statLabel, { color: currentTheme.subText }]}>Snap Created</Text>
                     </View>
                 </View>
             </View>
 
             <LearningPipeline
-                mastered={currentData.mastered}
-                learning={currentData.learning}
+                mastered={journeyStats.mastered}
+                learning={journeyStats.learning}
                 newWords={currentData.new}
                 retentionRate={currentData.accuracy}
             />
@@ -150,7 +196,9 @@ export default function InsightsScreen() {
                     title={`${filter === "Year" ? "Yearly" : filter + "ly"} Progress & Forecast`}
                     data={CHART_DATA_MOCK[filter as "Week" | "Month" | "Year"]}
                     expectedLabels={EXPECTED_LABELS[filter as "Week" | "Month" | "Year"]}
-                    goalValue={filter === "Year" ? userGoal : filter === "Month" ? userGoal / 4 : userGoal / 10}
+                    goalValue={
+                        filter === "Week" ? dailyGoal * 7 : filter === "Month" ? dailyGoal * 30 : dailyGoal * 365
+                    }
                 />
             )}
 
@@ -158,7 +206,7 @@ export default function InsightsScreen() {
                 <View style={[styles.infoBox, { backgroundColor: currentTheme.tagBlueBg }]}>
                     <Feather name="info" size={16} color={currentTheme.primary} />
                     <Text style={[styles.infoText, { color: currentTheme.tagBlueText }]}>
-                        Based on your current pace, you re on track to crush your goal! 🚀
+                        Based on your current pace, you re on track to crush your goal!
                     </Text>
                 </View>
             )}
@@ -169,28 +217,40 @@ export default function InsightsScreen() {
                     <Text style={{ color: currentTheme.primary, fontWeight: "bold" }}>Review Now</Text>
                 </TouchableOpacity>
             </View>
+
             <View
                 style={[styles.toughestCard, { backgroundColor: currentTheme.white, borderColor: currentTheme.border }]}
             >
-                {TOUGHEST_WORDS.map((item, idx) => (
-                    <View
-                        key={item.word}
-                        style={[
-                            styles.wordItem,
-                            idx < 2 && { borderBottomWidth: 1, borderBottomColor: currentTheme.border },
-                        ]}
-                    >
-                        <View>
-                            <Text style={[styles.wordText, { color: currentTheme.mainText }]}>{item.word}</Text>
-                            <Text style={[styles.collectionText, { color: currentTheme.subText }]}>
-                                {item.collection}
-                            </Text>
+                {isLoading ? (
+                    <ActivityIndicator size="small" color={currentTheme.primary} style={{ padding: 20 }} />
+                ) : toughestWords.length === 0 ? (
+                    <Text style={{ textAlign: "center", padding: 20, color: currentTheme.subText }}>
+                        Bạn đang học rất tốt, chưa có từ nào làm khó được bạn!
+                    </Text>
+                ) : (
+                    toughestWords.map((item, idx) => (
+                        <View
+                            key={item.flashcardId}
+                            style={[
+                                styles.wordItem,
+                                idx < toughestWords.length - 1 && {
+                                    borderBottomWidth: 1,
+                                    borderBottomColor: currentTheme.border,
+                                },
+                            ]}
+                        >
+                            <View>
+                                <Text style={[styles.wordText, { color: currentTheme.mainText }]}>{item.word}</Text>
+                                <Text style={[styles.collectionText, { color: currentTheme.subText }]}>
+                                    Needs review
+                                </Text>
+                            </View>
+                            <View style={styles.wordBadge}>
+                                <Text style={styles.badgeText}>{item.flipCount} flips</Text>
+                            </View>
                         </View>
-                        <View style={styles.wordBadge}>
-                            <Text style={styles.badgeText}>{item.accuracy} recall</Text>
-                        </View>
-                    </View>
-                ))}
+                    ))
+                )}
             </View>
 
             <View style={{ height: 20 }} />
@@ -207,7 +267,6 @@ const styles = StyleSheet.create({
     sectionHeader: { marginBottom: 15 },
     sectionHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
     subTitle: { fontSize: 18, fontWeight: "700" },
-
     statGrid: { gap: 10, marginBottom: 30 },
     statRow: { flexDirection: "row", gap: 10 },
     statBox: {
@@ -225,10 +284,8 @@ const styles = StyleSheet.create({
     },
     statValue: { fontSize: 18, fontWeight: "bold", marginTop: 6, marginBottom: 2 },
     statLabel: { fontSize: 11, fontWeight: "600", color: "#7C89AB" },
-
     infoBox: { flexDirection: "row", alignItems: "center", padding: 12, borderRadius: 12, marginBottom: 30, gap: 10 },
     infoText: { fontSize: 13, fontWeight: "600", flex: 1 },
-
     toughestCard: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, marginBottom: 20 },
     wordItem: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 15, alignItems: "center" },
     wordText: { fontSize: 16, fontWeight: "700" },
