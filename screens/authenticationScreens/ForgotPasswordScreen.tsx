@@ -5,23 +5,35 @@ import { Colors } from "@/constants/theme";
 import AuthInput from "@/components/AuthInput";
 import AuthButton from "@/components/AuthButton";
 import AuthLayout from "@/components/AuthLayout";
+import * as SecureStore from "expo-secure-store";
 
 export default function ForgotPasswordScreen() {
     const router = useRouter();
-    const currentTheme = Colors[useColorScheme() ?? "light"];
+    const systemScheme = useColorScheme() ?? "light";
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
+
     const [email, setEmail] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
     useEffect(() => {
-        Alert.alert(
-            "Notice",
-            "The Forgot Password feature is currently under development!",
-            [
-                { text: "OK", onPress: () => router.replace("/login") }
-            ]
-        );
-    }, []);
+        const syncTheme = async () => {
+            const storedTheme = await SecureStore.getItemAsync("themePreference");
+            if (storedTheme === "light" || storedTheme === "dark") {
+                setActiveMode(storedTheme);
+            } else {
+                setActiveMode(systemScheme);
+            }
+        };
+        syncTheme();
+
+        Alert.alert("Notice", "The Forgot Password feature is currently under development!", [
+            { text: "OK", onPress: () => router.replace("/login") },
+        ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [systemScheme]);
+
+    const currentTheme = Colors[activeMode];
 
     const handleResetPassword = () => {};
 
@@ -45,7 +57,7 @@ export default function ForgotPasswordScreen() {
 
             <Text style={[styles.disclaimer, { color: currentTheme.subText }]}>
                 By resetting password you agreed to our{"\n"}
-                <Text style={{ fontWeight: "bold" }}>terms and conditions</Text>
+                <Text style={{ fontWeight: "bold", color: currentTheme.mainText }}>terms and conditions</Text>
             </Text>
             <AuthButton title="Reset password" onPress={handleResetPassword} style={styles.mainBtn} />
         </AuthLayout>

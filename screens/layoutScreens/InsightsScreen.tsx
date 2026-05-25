@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, ActivityIndicator } from "react-native";
 import { MaterialCommunityIcons, FontAwesome5, Feather, Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
@@ -8,6 +8,7 @@ import LearningPipeline from "@/components/LearningPipeline";
 import { CardService } from "@/services/CardService";
 import { StatsCacheService, ActivityStats } from "@/services/StatsCacheService";
 import * as SecureStore from "expo-secure-store";
+import { useFocusEffect } from "expo-router";
 
 type FilterType = "Today" | "Week" | "Month" | "Year";
 
@@ -40,7 +41,8 @@ const CHART_DATA_MOCK = {
 };
 
 export default function InsightsScreen() {
-    const currentTheme = Colors[useColorScheme() ?? "light"];
+    const systemScheme = useColorScheme() ?? "light";
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
     const [filter, setFilter] = useState<FilterType>("Week");
     const [toughestWords, setToughestWords] = useState<any[]>([]);
     const [journeyStats, setJourneyStats] = useState({ mastered: 0, learning: 0 });
@@ -57,35 +59,44 @@ export default function InsightsScreen() {
 
     const currentData = stats[filter];
 
-    useEffect(() => {
-        const fetchInsights = async () => {
-            try {
-                setIsLoading(true);
-                const [wordsData, journeyData, cachedStats, storedGoal] = await Promise.all([
-                    CardService.getToughestWords(5),
-                    CardService.getLearningJourney(),
-                    StatsCacheService.getStats(),
-                    SecureStore.getItemAsync("dailyGoal"),
-                ]);
+    useFocusEffect(
+        useCallback(() => {
+            const fetchInsights = async () => {
+                try {
+                    setIsLoading(true);
+                    const [wordsData, journeyData, cachedStats, storedGoal, storedTheme] = await Promise.all([
+                        CardService.getToughestWords(5),
+                        CardService.getLearningJourney(),
+                        StatsCacheService.getStats(),
+                        SecureStore.getItemAsync("dailyGoal"),
+                        SecureStore.getItemAsync("themePreference"),
+                    ]);
 
-                setToughestWords(wordsData || []);
-                setJourneyStats({
-                    mastered: journeyData?.mastered?.length || 0,
-                    learning: journeyData?.learning?.length || 0,
-                });
-                setLocalStats(cachedStats);
+                    setToughestWords(wordsData || []);
+                    setJourneyStats({
+                        mastered: journeyData?.mastered?.length || 0,
+                        learning: journeyData?.learning?.length || 0,
+                    });
+                    setLocalStats(cachedStats);
 
-                if (storedGoal) {
-                    setDailyGoal(parseInt(storedGoal));
+                    if (storedGoal) setDailyGoal(parseInt(storedGoal));
+
+                    if (storedTheme === "light" || storedTheme === "dark") {
+                        setActiveMode(storedTheme);
+                    } else {
+                        setActiveMode(systemScheme);
+                    }
+                } catch (error) {
+                    console.log("Error loading insights:", error);
+                } finally {
+                    setIsLoading(false);
                 }
-            } catch (error) {
-                console.log("Error loading insights:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchInsights();
-    }, []);
+            };
+            fetchInsights();
+        }, [systemScheme]),
+    );
+
+    const currentTheme = Colors[activeMode];
 
     return (
         <MainLayout>
@@ -256,7 +267,6 @@ const styles = StyleSheet.create({
     sectionHeader: { marginBottom: 15 },
     sectionHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
     subTitle: { fontSize: 18, fontWeight: "700" },
-
     statGrid: { gap: 10, marginBottom: 30 },
     statRow: { flexDirection: "row", gap: 10 },
     statBox: {
@@ -274,10 +284,8 @@ const styles = StyleSheet.create({
     },
     statValue: { fontSize: 18, fontWeight: "bold", marginTop: 6, marginBottom: 2 },
     statLabel: { fontSize: 11, fontWeight: "600", color: "#7C89AB" },
-
     infoBox: { flexDirection: "row", alignItems: "center", padding: 12, borderRadius: 12, marginBottom: 30, gap: 10 },
     infoText: { fontSize: 13, fontWeight: "600", flex: 1 },
-
     toughestCard: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, marginBottom: 20 },
     wordItem: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 15, alignItems: "center" },
     wordText: { fontSize: 16, fontWeight: "700" },

@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, ActivityIndicator } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Colors, SIZES } from "@/constants/theme";
 import DeckCard from "@/components/DeckCard";
 import StatBox from "@/components/StatBox";
 import MainLayout from "@/components/MainLayout";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { DeckService } from "@/services/DeckService";
 import { CardService } from "@/services/CardService";
@@ -13,49 +13,56 @@ import { StatsCacheService } from "@/services/StatsCacheService";
 import { formatTimeAgo } from "@/services/date";
 
 export default function HomeScreen() {
-    const currentTheme = Colors[useColorScheme() ?? "light"];
+    const systemScheme = useColorScheme() ?? "light";
     const router = useRouter();
+
+    const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
     const [decks, setDecks] = useState<any[]>([]);
     const [journeyStats, setJourneyStats] = useState({ learning: 0, mastered: 0 });
     const [dailyGoal, setDailyGoal] = useState(20);
     const [wordsStudiedToday, setWordsStudiedToday] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchHomeData = async () => {
-            try {
-                setIsLoading(true);
+    useFocusEffect(
+        useCallback(() => {
+            const fetchHomeData = async () => {
+                try {
+                    setIsLoading(true);
 
-                const [decksData, journeyData, storedGoal, cachedStats] = await Promise.all([
-                    DeckService.getAllDecks(),
-                    CardService.getLearningJourney(),
-                    SecureStore.getItemAsync("dailyGoal"),
-                    StatsCacheService.getStats(),
-                ]);
+                    const [decksData, journeyData, storedGoal, cachedStats, storedTheme] = await Promise.all([
+                        DeckService.getAllDecks(),
+                        CardService.getLearningJourney(),
+                        SecureStore.getItemAsync("dailyGoal"),
+                        StatsCacheService.getStats(),
+                        SecureStore.getItemAsync("themePreference"),
+                    ]);
 
-                setDecks(decksData || []);
-                setJourneyStats({
-                    learning: journeyData?.learning?.length || 0,
-                    mastered: journeyData?.mastered?.length || 0,
-                });
+                    setDecks(decksData || []);
+                    setJourneyStats({
+                        learning: journeyData?.learning?.length || 0,
+                        mastered: journeyData?.mastered?.length || 0,
+                    });
 
-                if (storedGoal) {
-                    setDailyGoal(parseInt(storedGoal));
+                    if (storedGoal) setDailyGoal(parseInt(storedGoal));
+                    if (cachedStats) setWordsStudiedToday(cachedStats.wordsStudiedToday);
+
+                    if (storedTheme === "light" || storedTheme === "dark") {
+                        setActiveMode(storedTheme);
+                    } else {
+                        setActiveMode(systemScheme);
+                    }
+                } catch (error) {
+                    console.log("Lỗi tải dữ liệu màn hình chính:", error);
+                } finally {
+                    setIsLoading(false);
                 }
+            };
 
-                if (cachedStats) {
-                    setWordsStudiedToday(cachedStats.wordsStudiedToday);
-                }
-            } catch (error) {
-                console.log("Lỗi tải dữ liệu màn hình chính:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+            fetchHomeData();
+        }, [systemScheme]),
+    );
 
-        fetchHomeData();
-    }, []);
-
+    const currentTheme = Colors[activeMode];
     const progressPercent = Math.min((wordsStudiedToday / dailyGoal) * 100, 100);
     const wordsLeft = Math.max(dailyGoal - wordsStudiedToday, 0);
 
@@ -153,21 +160,9 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-    headerTitle: {
-        fontSize: 36,
-        fontWeight: "900",
-        marginBottom: 15,
-    },
-    sectionTitle: {
-        fontSize: SIZES.body1,
-        fontWeight: "bold",
-        marginBottom: 12,
-    },
-    overviewRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginBottom: 20,
-    },
+    headerTitle: { fontSize: 36, fontWeight: "900", marginBottom: 15 },
+    sectionTitle: { fontSize: SIZES.body1, fontWeight: "bold", marginBottom: 12 },
+    overviewRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 20 },
     dailyGoalCard: {
         padding: 16,
         borderRadius: 16,
@@ -178,23 +173,9 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 4,
     },
-    dailyGoalHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 12,
-    },
-    progressBarBg: {
-        height: 8,
-        backgroundColor: "#F0F0F0",
-        borderRadius: 4,
-        overflow: "hidden",
-        marginBottom: 8,
-    },
-    progressBarFill: {
-        height: "100%",
-        borderRadius: 4,
-    },
+    dailyGoalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+    progressBarBg: { height: 8, backgroundColor: "#F0F0F0", borderRadius: 4, overflow: "hidden", marginBottom: 8 },
+    progressBarFill: { height: "100%", borderRadius: 4 },
     reviewCard: {
         padding: 16,
         borderRadius: 16,
@@ -205,11 +186,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 5,
     },
-    reviewCardContent: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
+    reviewCardContent: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     reviewTitle: { color: "#FFF", fontSize: 16, fontWeight: "bold", marginBottom: 4 },
     reviewSubtitle: { color: "rgba(255,255,255,0.8)", fontSize: 12 },
     playIconWrapper: {
@@ -221,10 +198,5 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingLeft: 3,
     },
-    lastAccessHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 12,
-    },
+    lastAccessHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
 });
