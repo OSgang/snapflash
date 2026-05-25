@@ -28,6 +28,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 	implementation("org.springframework.security:spring-security-oauth2-jose")
     implementation("net.sourceforge.tess4j:tess4j:5.11.0")
+	implementation("io.sentry:sentry:8.42.0")
+	implementation("io.sentry:sentry-logback:8.42.0")
 	implementation("org.springframework.security:spring-security-crypto")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
