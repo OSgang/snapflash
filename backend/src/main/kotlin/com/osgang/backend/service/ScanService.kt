@@ -20,7 +20,7 @@ class ScanService (
         val extractedCardCandidates: List<String> = this.extractOCR(multipartFile)
         val listOfCandidates: List<String> = this.cardCandidatesCuration(extractedCardCandidates)
 
-        return listOfCandidates.mapNotNull {
+        val candidates = listOfCandidates.mapNotNull {
             val candidateDefinition = dictionaryService.lookup(it)
             if (candidateDefinition.isNotEmpty()) {
                 CardCandidateResponse(it.lowercase(), candidateDefinition)
@@ -28,6 +28,10 @@ class ScanService (
                 null
             }
         }.toSet()
+
+        println("🫩 Finished scan!")
+        println("Candidates: $candidates")
+        return candidates
     }
 
     fun extractOCR(multipartFile: MultipartFile): List<String> {
