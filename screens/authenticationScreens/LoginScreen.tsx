@@ -48,8 +48,8 @@ export default function LoginScreen() {
             setIsLoading(true);
             router.prefetch("/(tabs)")
             const response = await AuthService.login(cleanUsername, cleanPassword);
-            if (response && response.token) {
-                await SecureStore.setItemAsync("jwtToken", response.token);
+            if (response && response.jwtToken) {
+                await SecureStore.setItemAsync("jwtToken", response.jwtToken);
                 await SecureStore.setItemAsync("username", cleanUsername);
                 router.dismissAll()
                 router.replace("/(tabs)");
