@@ -28,7 +28,7 @@ export default function ForgotPasswordScreen() {
         syncTheme();
 
         Alert.alert("Notice", "The Forgot Password feature is currently under development!", [
-            { text: "OK", onPress: () => router.replace("/login") },
+            { text: "OK", onPress: () => router.back() },
         ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [systemScheme]);

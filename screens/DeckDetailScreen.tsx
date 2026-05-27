@@ -65,7 +65,7 @@ export default function DeckDetailScreen() {
             <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
                 <View style={styles.topArrowContainer}>
                     <TouchableOpacity onPress={() => router.back()}>
-                        <AntDesign name="arrow-left" size={28} color={currentTheme.mainText} />
+                        <AntDesign name="left" size={28} color={currentTheme.mainText} />
                     </TouchableOpacity>
                 </View>
 

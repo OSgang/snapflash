@@ -54,7 +54,7 @@ export default function SignUpScreen() {
             setIsLoading(true);
             await AuthService.register(Email, Username, Password);
             Alert.alert("Thành công", "Đăng ký tài khoản mới thành công!", [
-                { text: "Đăng nhập ngay", onPress: () => router.replace("/login") },
+                { text: "Đăng nhập ngay", onPress: () => router.back() },
             ]);
         } catch (error: any) {
             Alert.alert("Đăng ký thất bại", String(error));

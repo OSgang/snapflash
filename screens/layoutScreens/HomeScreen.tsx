@@ -126,7 +126,7 @@ export default function HomeScreen() {
                 <Text style={[styles.sectionTitle, { color: currentTheme.mainText, marginBottom: 0 }]}>
                     Last Accessed
                 </Text>
-                <TouchableOpacity onPress={() => router.push("/collections")}>
+                <TouchableOpacity onPress={() => router.navigate("/collections")}>
                     <Text style={{ color: currentTheme.primary, fontSize: SIZES.body2 }}>See all</Text>
                 </TouchableOpacity>
             </View>

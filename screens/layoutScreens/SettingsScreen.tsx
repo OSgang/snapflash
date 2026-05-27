@@ -83,6 +83,7 @@ export default function SettingsScreen() {
             console.error("Error in LOGOUT:", error);
         } finally {
             await SecureStore.deleteItemAsync("username");
+            router.dismissAll()
             router.replace("/login");
         }
     };
