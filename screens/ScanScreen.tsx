@@ -299,7 +299,7 @@ export default function ScanScreen() {
             <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.headerIconWrapper}>
-                        <AntDesign name="arrow-left" size={28} color={currentTheme.mainText} />
+                        <AntDesign name="left" size={28} color={currentTheme.mainText} />
                     </TouchableOpacity>
 
                     <Text style={[styles.headerTitle, { color: currentTheme.mainText }]}>SnapFlash</Text>
