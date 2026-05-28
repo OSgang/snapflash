@@ -3,6 +3,7 @@ import VoiceSpeechScreen from "@/app/settings/voice-speech";
 
 jest.mock("expo-router", () => ({
     useRouter: () => ({ back: jest.fn() }),
+    Stack: { Screen: () => null },
 }));
 
 describe("VoiceSpeechScreen", () => {

@@ -3,6 +3,7 @@ import NotificationsScreen from "@/app/settings/notifications";
 
 jest.mock("expo-router", () => ({
     useRouter: () => ({ back: jest.fn() }),
+    Stack: { Screen: () => null },
 }));
 
 describe("NotificationsScreen", () => {

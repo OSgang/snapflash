@@ -4,6 +4,7 @@ import EditProfileScreen from "@/app/settings/edit-profile";
 const mockBack = jest.fn();
 jest.mock("expo-router", () => ({
     useRouter: () => ({ back: mockBack }),
+    Stack: { Screen: () => null },
 }));
 
 describe("EditProfileScreen", () => {

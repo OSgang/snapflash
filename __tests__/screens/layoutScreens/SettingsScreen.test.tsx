@@ -1,19 +1,32 @@
 import { fireEvent, render, screen } from "@testing-library/react-native";
 import { Linking } from "react-native";
 import SettingsScreen from "@/screens/layoutScreens/SettingsScreen";
+import { AuthService } from "@/services/AuthService";
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
 
 jest.mock("expo-router", () => ({
     useRouter: () => ({ push: mockPush, replace: mockReplace }),
+    useFocusEffect: (callback: any) => {
+        const React = require("react");
+        React.useEffect(() => callback(), [callback]);
+    },
+    Stack: { Screen: () => null },
 }));
 
 jest.spyOn(Linking, "openURL").mockImplementation(jest.fn());
 
+jest.mock("@/services/AuthService", () => ({
+    AuthService: {
+        logout: jest.fn(),
+    },
+}));
+
 describe("SettingsScreen", () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        (AuthService.logout as jest.Mock).mockResolvedValue(undefined);
     });
 
     it("render đầy đủ giao diện và thông tin user", () => {
@@ -39,7 +52,7 @@ describe("SettingsScreen", () => {
 
     it("mở link trình duyệt khi bấm vào Support / Privacy", () => {
         render(<SettingsScreen />);
-        fireEvent.press(screen.getByText("Help Center"));
+        fireEvent.press(screen.getByText("Privacy Policy"));
         expect(Linking.openURL).toHaveBeenCalled();
     });
 
@@ -56,9 +69,11 @@ describe("SettingsScreen", () => {
         expect(screen.getByText("35 words")).toBeTruthy();
     });
 
-    it("đăng xuất thành công", () => {
+    it("đăng xuất thành công", async () => {
         render(<SettingsScreen />);
         fireEvent.press(screen.getByText("Log Out"));
+        expect(AuthService.logout).toHaveBeenCalled();
+        expect(await screen.findByText("Log Out")).toBeTruthy();
         expect(mockReplace).toHaveBeenCalledWith("/login");
     });
 });

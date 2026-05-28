@@ -35,26 +35,22 @@ jobs:
       - name: Run tests with coverage
         run: npm run test:coverage -- --runInBand
 
-      - name: Create backend test configuration
+      - name: Create backend test environment
         working-directory: backend
+        env:
+          NEON_TEST_DATASOURCE_URL: ${{ secrets.NEON_TEST_DATASOURCE_URL }}
+          NEON_TEST_FLYWAY_URL: ${{ secrets.NEON_TEST_FLYWAY_URL }}
+          NEON_TEST_USERNAME: ${{ secrets.NEON_TEST_USERNAME }}
+          NEON_TEST_PASSWORD: ${{ secrets.NEON_TEST_PASSWORD }}
+          JWT_SIGNER_KEY: ${{ secrets.JWT_SIGNER_KEY }}
         run: |
-          mkdir -p src/test/resources
-          cat > src/test/resources/application-test.properties <<'EOF'
-          spring.datasource.url=${NEON_TEST_DATASOURCE_URL}
-          spring.datasource.username=${NEON_TEST_USERNAME}
-          spring.datasource.password=${NEON_TEST_PASSWORD}
-
-          spring.flyway.enabled=true
-          spring.flyway.url=${NEON_TEST_FLYWAY_URL}
-          spring.flyway.user=${NEON_TEST_USERNAME}
-          spring.flyway.password=${NEON_TEST_PASSWORD}
-
-          spring.jpa.hibernate.ddl-auto=validate
-
-          tesseract.datapath=/tmp
-          spring.servlet.multipart.max-file-size=10MB
-          spring.servlet.multipart.max-request-size=10MB
-          EOF
+          {
+            printf '%s\n' "NEON_TEST_DATASOURCE_URL=${NEON_TEST_DATASOURCE_URL}"
+            printf '%s\n' "NEON_TEST_FLYWAY_URL=${NEON_TEST_FLYWAY_URL}"
+            printf '%s\n' "NEON_TEST_USERNAME=${NEON_TEST_USERNAME}"
+            printf '%s\n' "NEON_TEST_PASSWORD=${NEON_TEST_PASSWORD}"
+            printf '%s\n' "JWT_SIGNER_KEY=${JWT_SIGNER_KEY}"
+          } > .env.test.local
 
       - name: Validate backend CI secrets
         env:
@@ -79,7 +75,7 @@ jobs:
           NEON_TEST_USERNAME: ${{ secrets.NEON_TEST_USERNAME }}
           NEON_TEST_PASSWORD: ${{ secrets.NEON_TEST_PASSWORD }}
           JWT_SIGNER_KEY: ${{ secrets.JWT_SIGNER_KEY }}
-        run: ./gradlew test
+        run: ./scripts/test-with-env.sh
 
       - name: Upload test report artifact
         uses: actions/upload-artifact@v4
