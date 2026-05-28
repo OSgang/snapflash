@@ -7,15 +7,20 @@ import net.sourceforge.tess4j.Tesseract
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
+import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.File
+import java.util.concurrent.Semaphore
 import javax.imageio.ImageIO
+import kotlin.math.roundToInt
 
 @Service
 class ScanService (
     @Value("\${tesseract.datapath}") private val tesseractDataPath: String,
     val dictionaryService: DictionaryService
 ) {
+    private val ocrSemaphore = Semaphore(1, true)
+
     fun getCardCandidates(multipartFile: MultipartFile): Set<CardCandidateResponse> {
         val extractedCardCandidates: List<String> = this.extractOCR(multipartFile)
         val listOfCandidates: List<String> = this.cardCandidatesCuration(extractedCardCandidates)
@@ -30,12 +35,12 @@ class ScanService (
         }.toSet()
 
         println("🫩 Finished scan!")
-        println("Candidates: $candidates")
+        println("Found ${candidates.size} candidates")
         return candidates
     }
 
     fun extractOCR(multipartFile: MultipartFile): List<String> {
-        val tempFile = File.createTempFile("ocr_temp", ".jpg") // ✅ .jpg thay vì .png
+        val tempFile = File.createTempFile("ocr_temp", ".jpg")  // .jpg instead of .png
 
         val tesseract = Tesseract().apply {
             setDatapath(tesseractDataPath)
@@ -45,22 +50,17 @@ class ScanService (
         return try {
             multipartFile.transferTo(tempFile)
 
-            // ✅ Load thành BufferedImage trước, bỏ qua format detection của Tess4j
-            val original: BufferedImage = ImageIO.read(tempFile)
-                ?: throw AppException(ErrorCode.SCAN__FAILED)
+            ocrSemaphore.acquire()
+            try {
+                val image = readScaledGrayscaleImage(tempFile)
 
-            // ✅ Convert sang RGB để Tess4j OCR chuẩn xác hơn (bỏ alpha channel)
-            val rgbImage = BufferedImage(original.width, original.height, BufferedImage.TYPE_INT_RGB)
-            val g2d = rgbImage.createGraphics()
-            g2d.drawImage(original, 0, 0, null)
-            g2d.dispose()
-
-            println("\uD83E\uDEC2 Extracting text from image...")
-            val extractedText = tesseract.doOCR(rgbImage)
-                .trim()
-                .split(Regex("[^a-zA-Z]+"))
-
-            extractedText
+                println("\uD83E\uDEC2 Extracting text from ${image.width}x${image.height} image...")
+                tesseract.doOCR(image)
+                    .trim()
+                    .split(Regex("[^a-zA-Z]+"))
+            } finally {
+                ocrSemaphore.release()
+            }
         } catch (e: Exception) {
             println("OCR Processing failed: ${e.message}}")
             throw AppException(ErrorCode.SCAN__FAILED)
@@ -69,6 +69,66 @@ class ScanService (
                 tempFile.delete()
             }
         }
+    }
+
+    private fun readScaledGrayscaleImage(file: File): BufferedImage {
+        val imageInputStream = ImageIO.createImageInputStream(file)
+            ?: throw AppException(ErrorCode.SCAN__FAILED)
+
+        imageInputStream.use { stream ->
+            val readers = ImageIO.getImageReaders(stream)
+            if (!readers.hasNext()) {
+                throw AppException(ErrorCode.SCAN__FAILED)
+            }
+
+            val reader = readers.next()
+            return try {
+                reader.input = stream
+                val originalWidth = reader.getWidth(0)
+                val originalHeight = reader.getHeight(0)
+                val readParam = reader.defaultReadParam
+                val subsampling = calculateSubsampling(originalWidth, originalHeight)
+
+                if (subsampling > 1) {
+                    readParam.setSourceSubsampling(subsampling, subsampling, 0, 0)
+                }
+
+                val decodedImage = reader.read(0, readParam)
+                    ?: throw AppException(ErrorCode.SCAN__FAILED)
+
+                resizeAndConvertToGrayscale(decodedImage)
+            } finally {
+                reader.dispose()
+            }
+        }
+    }
+
+    private fun calculateSubsampling(width: Int, height: Int): Int {
+        val longestSide = maxOf(width, height)
+        return (longestSide.toDouble() / MAX_OCR_IMAGE_DIMENSION).roundToInt().coerceAtLeast(1)
+    }
+
+    private fun resizeAndConvertToGrayscale(image: BufferedImage): BufferedImage {
+        val longestSide = maxOf(image.width, image.height)
+        val scale = if (longestSide > MAX_OCR_IMAGE_DIMENSION) {
+            MAX_OCR_IMAGE_DIMENSION.toDouble() / longestSide
+        } else {
+            1.0
+        }
+
+        val targetWidth = (image.width * scale).roundToInt().coerceAtLeast(1)
+        val targetHeight = (image.height * scale).roundToInt().coerceAtLeast(1)
+        val grayscaleImage = BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_BYTE_GRAY)
+        val g2d = grayscaleImage.createGraphics()
+
+        try {
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+            g2d.drawImage(image, 0, 0, targetWidth, targetHeight, null)
+        } finally {
+            g2d.dispose()
+        }
+
+        return grayscaleImage
     }
 
     fun cardCandidatesCuration(
@@ -90,5 +150,9 @@ class ScanService (
         val sortedCardCandidates: List<Pair<String, Int>> = wordAppearHistogram.toList().sortedByDescending { it.second }
 
         return sortedCardCandidates.map { it.first }.take(numOfCandidates)
+    }
+
+    companion object {
+        private const val MAX_OCR_IMAGE_DIMENSION = 1800
     }
 }
