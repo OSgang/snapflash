@@ -51,7 +51,6 @@ export default function LoginScreen() {
             if (response && response.jwtToken) {
                 await SecureStore.setItemAsync("jwtToken", response.jwtToken);
                 await SecureStore.setItemAsync("username", cleanUsername);
-                router.dismissAll()
                 router.replace("/(tabs)");
             } else {
                 Alert.alert("Thất bại", "Token không hợp lệ từ máy chủ");
