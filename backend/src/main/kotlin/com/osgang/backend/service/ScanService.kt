@@ -66,7 +66,10 @@ class ScanService (
             throw AppException(ErrorCode.SCAN__FAILED)
         } finally {
             if (tempFile.exists()) {
-                tempFile.delete()
+                val isDeleted = tempFile.delete()
+                if (!isDeleted) {
+                    println("Failed to delete temporary OCR file: ${tempFile.absolutePath}")
+                }
             }
         }
     }
