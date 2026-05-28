@@ -43,7 +43,11 @@ class SecurityConfig (
                     // This will allow any error to be shown when it is thrown
                     .requestMatchers("/error").permitAll()
 
-                    .requestMatchers(HttpMethod.GET, "/user/greet").permitAll()
+                    .requestMatchers(
+                        HttpMethod.GET,
+                        "/user/greet",
+                        "/"
+                        ).permitAll()
 
                     // Require a valid token for EVERY other endpoint in your app
                     .anyRequest().authenticated()
