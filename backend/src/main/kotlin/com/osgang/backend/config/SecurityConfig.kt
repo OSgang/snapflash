@@ -19,7 +19,7 @@ import java.util.UUID
 @Configuration
 @EnableWebSecurity
 class SecurityConfig (
-    @Value("\${JWT_SIGNER_KEY}") private val SIGNER_KEY: String,
+    @Value("\${JWT_SIGNER_KEY}") private val signerKey: String,
     private val invalidTokenRepository: InvalidTokenRepository
 ) {
     @Bean
@@ -64,7 +64,7 @@ class SecurityConfig (
 
     @Bean
     fun jwtDecoder(): JwtDecoder {
-        val secretKey = SecretKeySpec(SIGNER_KEY.toByteArray(), "HmacSHA256")
+        val secretKey = SecretKeySpec(signerKey.toByteArray(), "HmacSHA256")
 
         // Explicitly tell Spring to expect the HS256 algorithm
         val nimbusJwtDecoder = NimbusJwtDecoder.withSecretKey(secretKey)

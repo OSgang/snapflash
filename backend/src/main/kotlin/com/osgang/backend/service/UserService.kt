@@ -19,7 +19,6 @@ class UserService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder = BCryptPasswordEncoder(),
 ) {
-    // fun userCreationRequest(request: UserCreationRequest): Response<User, HttpStatus> {
     fun userCreationRequest(request: UserCreationRequest): User {
         val user = User(
             email = request.email,
@@ -60,18 +59,13 @@ class UserService(
         return userRepository.existsByUserId(id)
     }
 
-    // fun userLoginRequest(request: UserLoginRequest): Response<User, HttpStatus> {
     fun userLoginRequest(request: UserLoginRequest): User {
         val user = userRepository.findByUsername(request.username)
-        // user ?: return Response.Err(HttpStatus.NOT_FOUND, "Can't find user.")
         user ?: throw AppException(ErrorCode.USER__USER_NOT_FOUND)
 
         if (!passwordEncoder.matches(request.password, user.passwordHash)) {
-            // return Response.Err(HttpStatus.UNAUTHORIZED, "Wrong password.")
             throw AppException(ErrorCode.USER__WRONG_PASSWORD)
         }
-
-//        LOGGED_IN_USERS.add(requireNotNull(user.userId))
 
         return user
     }

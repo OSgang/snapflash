@@ -32,20 +32,17 @@ import java.util.UUID
 class AuthenticationService (
     val userRepository: UserRepository,
     private val invalidTokenRepository: InvalidTokenRepository,
-    @Value("\${JWT_SIGNER_KEY}") val SIGNER_KEY: String
+    @Value("\${JWT_SIGNER_KEY}") val signerKey: String
 ) {
 
     fun logout(jwttoken: String) {
         val jwt = SignedJWT.parse(jwttoken)
 
-        val verifier = MACVerifier(SIGNER_KEY.toByteArray())
+        val verifier = MACVerifier(signerKey.toByteArray())
 
         if (!jwt.verify(verifier)){
             throw AppException(ErrorCode.JWT__INVALID_TOKEN)
         }
-
-        val userName = jwt.jwtClaimsSet.subject
-
 
         val expirationtime = jwt.jwtClaimsSet.expirationTime
 
@@ -64,7 +61,7 @@ class AuthenticationService (
     fun introspect(request: IntrospectRequest): IntrospectResponse {
         val jwtToken = request.jwtToken
 
-        val verifier = MACVerifier(SIGNER_KEY.toByteArray())
+        val verifier = MACVerifier(signerKey.toByteArray())
 
         val signedJWT = SignedJWT.parse(jwtToken)
 
@@ -121,7 +118,7 @@ class AuthenticationService (
         val jwsObject = JWSObject(jwsHeader, payload)
 
         try {
-            jwsObject.sign(MACSigner(SIGNER_KEY.toByteArray()))
+            jwsObject.sign(MACSigner(signerKey.toByteArray()))
             return jwsObject.serialize()
 
         } catch (e: JOSEException) {
