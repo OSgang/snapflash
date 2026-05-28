@@ -20,6 +20,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { CardService } from "@/services/CardService";
 import * as SecureStore from "expo-secure-store";
 
+const parseBracketedDefinition = (text: string, fallbackType: string) => {
+    if (!text.startsWith("[")) {
+        return { type: fallbackType, definition: text };
+    }
+
+    const closingBracketIndex = text.indexOf("]");
+    if (closingBracketIndex === -1) {
+        return { type: fallbackType, definition: text };
+    }
+
+    return {
+        type: text.slice(1, closingBracketIndex),
+        definition: text.slice(closingBracketIndex + 1).trimStart(),
+    };
+};
+
 export default function EditCardScreen() {
     const systemScheme = useColorScheme() ?? "light";
     const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
@@ -36,14 +52,9 @@ export default function EditCardScreen() {
     } = useLocalSearchParams();
 
     const parsedDef = (editDefinition as string) || "";
-    let initialType = "Verb";
-    let initialDefText = parsedDef;
-
-    const match = parsedDef.match(/^\[(.*?)\]\s*(.*)$/);
-    if (match) {
-        initialType = match[1];
-        initialDefText = match[2];
-    }
+    const parsedDefinition = parseBracketedDefinition(parsedDef, "Verb");
+    const initialType = parsedDefinition.type;
+    const initialDefText = parsedDefinition.definition;
 
     const [selectedType, setSelectedType] = useState("Verb");
     const [word, setWord] = useState("");

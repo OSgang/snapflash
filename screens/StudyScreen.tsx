@@ -30,6 +30,22 @@ import * as SecureStore from "expo-secure-store";
 const { width, height } = Dimensions.get("window");
 const SWIPE_THRESHOLD = width * 0.25;
 
+const parseBracketedDefinition = (text: string) => {
+    if (!text.startsWith("[")) {
+        return { type: "Word", def: text };
+    }
+
+    const closingBracketIndex = text.indexOf("]");
+    if (closingBracketIndex === -1) {
+        return { type: "Word", def: text };
+    }
+
+    return {
+        type: text.slice(1, closingBracketIndex),
+        def: text.slice(closingBracketIndex + 1).trimStart(),
+    };
+};
+
 export default function StudyScreen() {
     const systemScheme = useColorScheme() ?? "light";
     const [activeMode, setActiveMode] = useState<"light" | "dark">("light");
@@ -261,11 +277,6 @@ export default function StudyScreen() {
         );
     }
 
-    const parseDefinition = (text: string) => {
-        const match = text?.match(/^\[(.*?)\]\s*(.*)$/);
-        return match ? { type: match[1], def: match[2] } : { type: "Word", def: text };
-    };
-
     return (
         <LinearGradient colors={[currentTheme.customBackground as string, currentTheme.white]} style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
@@ -369,13 +380,13 @@ export default function StudyScreen() {
                                             <AntDesign name="star" size={32} color="#FFF" style={styles.starIcon} />
                                             <View style={styles.cardBackContent}>
                                                 <Text style={styles.cardBackType}>
-                                                    {parseDefinition(currentWord.definition).type}
+                                                    {parseBracketedDefinition(currentWord.definition).type}
                                                 </Text>
                                                 <Text style={[styles.cardBackType, { fontSize: 24, marginBottom: 5 }]}>
                                                     {currentWord.translation}
                                                 </Text>
                                                 <Text style={styles.cardBackDef}>
-                                                    {parseDefinition(currentWord.definition).def}
+                                                    {parseBracketedDefinition(currentWord.definition).def}
                                                 </Text>
                                             </View>
                                             <Text style={styles.cardHintBack}>Tap to flip</Text>

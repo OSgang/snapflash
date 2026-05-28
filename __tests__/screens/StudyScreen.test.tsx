@@ -153,6 +153,34 @@ describe("StudyScreen", () => {
         expect(await screen.findByText("Market")).toBeTruthy();
     });
 
+    it("shows bracketless definitions with the default Word type", async () => {
+        (DeckService.getDeckById as jest.Mock).mockResolvedValueOnce([
+            { ...flashcards[0], definition: "Plain definition" },
+        ]);
+
+        render(<StudyScreen />);
+
+        expect(await screen.findByText("Capitalism")).toBeTruthy();
+        fireEvent.press(screen.getAllByText("Tap to flip")[0]);
+
+        expect(screen.getByText("Word")).toBeTruthy();
+        expect(screen.getByText("Plain definition")).toBeTruthy();
+    });
+
+    it("shows malformed bracket definitions as plain text", async () => {
+        (DeckService.getDeckById as jest.Mock).mockResolvedValueOnce([
+            { ...flashcards[0], definition: "[Broken definition" },
+        ]);
+
+        render(<StudyScreen />);
+
+        expect(await screen.findByText("Capitalism")).toBeTruthy();
+        fireEvent.press(screen.getAllByText("Tap to flip")[0]);
+
+        expect(screen.getByText("Word")).toBeTruthy();
+        expect(screen.getByText("[Broken definition")).toBeTruthy();
+    });
+
     it("handles flip-count update failures without leaving the end screen", async () => {
         (CardService.updateFlipCount as jest.Mock).mockRejectedValueOnce("offline");
 

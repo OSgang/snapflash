@@ -49,6 +49,24 @@ describe("EditCardScreen", () => {
         expect(screen.getByText("Noun")).toBeTruthy();
     });
 
+    it("keeps bracketless edit definitions as plain text", async () => {
+        mockParams.definition = "Plain definition";
+
+        render(<EditCardScreen />);
+
+        expect(await screen.findByDisplayValue("Plain definition")).toBeTruthy();
+        expect(screen.getByText("Verb")).toBeTruthy();
+    });
+
+    it("keeps malformed bracket definitions as plain text", async () => {
+        mockParams.definition = "[Broken definition";
+
+        render(<EditCardScreen />);
+
+        expect(await screen.findByDisplayValue("[Broken definition")).toBeTruthy();
+        expect(screen.getByText("Verb")).toBeTruthy();
+    });
+
     it("selects word type without crashing", () => {
         render(<EditCardScreen />);
         fireEvent.press(screen.getByText("Adjective"));
