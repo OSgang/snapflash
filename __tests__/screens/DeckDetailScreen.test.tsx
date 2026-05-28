@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react-native";
 import DeckDetailScreen from "@/screens/DeckDetailScreen";
 import { DeckService } from "@/services/DeckService";
+import * as SecureStore from "expo-secure-store";
 
 const mockPush = jest.fn();
 const mockBack = jest.fn();
@@ -33,6 +34,7 @@ const cards = [
 describe("DeckDetailScreen", () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
         (DeckService.getDeckById as jest.Mock).mockResolvedValue(cards);
     });
 
@@ -89,6 +91,25 @@ describe("DeckDetailScreen", () => {
 
     it("renders an empty state when the deck has no cards", async () => {
         (DeckService.getDeckById as jest.Mock).mockResolvedValueOnce([]);
+
+        render(<DeckDetailScreen />);
+
+        expect(await screen.findByText("Bộ bài này hiện chưa có thẻ nào.")).toBeTruthy();
+    });
+
+    it("loads stored theme and supports the top back button", async () => {
+        (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce("dark");
+
+        render(<DeckDetailScreen />);
+
+        await screen.findByText("Capitalism");
+        fireEvent.press(screen.getByText("left"));
+        expect(mockBack).toHaveBeenCalled();
+    });
+
+    it("renders empty state when deck loading fails", async () => {
+        jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+        (DeckService.getDeckById as jest.Mock).mockRejectedValueOnce("network");
 
         render(<DeckDetailScreen />);
 

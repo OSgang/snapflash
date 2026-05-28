@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react-native";
 import InsightsScreen from "@/screens/layoutScreens/InsightsScreen";
 import { CardService } from "@/services/CardService";
 import { StatsCacheService } from "@/services/StatsCacheService";
+import * as SecureStore from "expo-secure-store";
 
 jest.mock("@/services/CardService", () => ({
     CardService: {
@@ -19,6 +20,7 @@ jest.mock("@/services/StatsCacheService", () => ({
 describe("InsightsScreen", () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
         (CardService.getToughestWords as jest.Mock).mockResolvedValue([
             { flashcardId: "1", word: "Capitalism", flipCount: 4 },
             { flashcardId: "2", word: "Market", flipCount: 3 },
@@ -62,5 +64,31 @@ describe("InsightsScreen", () => {
         render(<InsightsScreen />);
 
         expect(await screen.findByText("Bạn đang học rất tốt, chưa có từ nào làm khó được bạn!")).toBeTruthy();
+    });
+
+    it("uses stored daily goal and theme values for chart goal branches", async () => {
+        (SecureStore.getItemAsync as jest.Mock).mockImplementation((key: string) => {
+            if (key === "dailyGoal") return Promise.resolve("12");
+            if (key === "themePreference") return Promise.resolve("dark");
+            return Promise.resolve(null);
+        });
+
+        render(<InsightsScreen />);
+
+        expect(await screen.findByText("Capitalism")).toBeTruthy();
+        fireEvent.press(screen.getByText("Month"));
+        expect(screen.getByText("Review Now")).toBeTruthy();
+        fireEvent.press(screen.getByText("Year"));
+        expect(screen.getByText("Review Now")).toBeTruthy();
+    });
+
+    it("renders fallback metrics when insights loading fails", async () => {
+        jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+        (CardService.getToughestWords as jest.Mock).mockRejectedValueOnce("network");
+
+        render(<InsightsScreen />);
+
+        expect(await screen.findByText("Bạn đang học rất tốt, chưa có từ nào làm khó được bạn!")).toBeTruthy();
+        expect(screen.getByText("0m")).toBeTruthy();
     });
 });

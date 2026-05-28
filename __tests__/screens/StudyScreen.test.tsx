@@ -3,6 +3,7 @@ import StudyScreen from "@/screens/StudyScreen";
 import { DeckService } from "@/services/DeckService";
 import { CardService } from "@/services/CardService";
 import { StatsCacheService } from "@/services/StatsCacheService";
+import * as SecureStore from "expo-secure-store";
 
 jest.mock("expo-router", () => ({
     useRouter: () => ({ back: jest.fn() }),
@@ -39,6 +40,7 @@ describe("StudyScreen", () => {
     beforeEach(() => {
         jest.useFakeTimers();
         jest.clearAllMocks();
+        (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
         (DeckService.getDeckById as jest.Mock).mockResolvedValue(flashcards);
         (CardService.updateFlipCount as jest.Mock).mockResolvedValue({});
         (StatsCacheService.addStudyTime as jest.Mock).mockResolvedValue(undefined);
@@ -101,6 +103,56 @@ describe("StudyScreen", () => {
         expect(screen.getByText("Capitalism")).toBeTruthy();
     });
 
+    it("handles tap and short drag gestures on the flashcard", async () => {
+        const view = render(<StudyScreen />);
+
+        expect(await screen.findByText("Capitalism")).toBeTruthy();
+
+        const swipeTarget = view.UNSAFE_root.findAll(
+            (node) =>
+                typeof node.props.onResponderMove === "function" &&
+                typeof node.props.onResponderRelease === "function" &&
+                Array.isArray(node.props.style) &&
+                node.props.style.some((style: any) => style?.zIndex === 10),
+        )[0];
+        const touchEvent = (currentX: number, previousX: number, timestamp: number) => ({
+            touchHistory: {
+                numberActiveTouches: 1,
+                indexOfSingleActiveTouch: 0,
+                mostRecentTimeStamp: timestamp,
+                touchBank: [
+                    {
+                        touchActive: true,
+                        currentPageX: currentX,
+                        currentPageY: 0,
+                        previousPageX: previousX,
+                        previousPageY: 0,
+                        currentTimeStamp: timestamp,
+                    },
+                ],
+            },
+        });
+
+        act(() => {
+            swipeTarget.props.onResponderGrant(touchEvent(0, 0, 1));
+            swipeTarget.props.onResponderRelease(touchEvent(2, 0, 2));
+        });
+        expect(screen.getByText("chu nghia tu ban")).toBeTruthy();
+
+        act(() => {
+            swipeTarget.props.onResponderGrant(touchEvent(0, 0, 3));
+            swipeTarget.props.onResponderMove(touchEvent(40, 0, 4));
+            swipeTarget.props.onResponderRelease(touchEvent(40, 0, 5));
+        });
+        expect(screen.getByText("Capitalism")).toBeTruthy();
+
+        fireEvent.press(screen.getByText("check"));
+        act(() => {
+            jest.advanceTimersByTime(300);
+        });
+        expect(await screen.findByText("Market")).toBeTruthy();
+    });
+
     it("handles flip-count update failures without leaving the end screen", async () => {
         (CardService.updateFlipCount as jest.Mock).mockRejectedValueOnce("offline");
 
@@ -135,5 +187,13 @@ describe("StudyScreen", () => {
         render(<StudyScreen />);
 
         expect(await screen.findByText("Bộ bài này chưa có thẻ nào. Hãy thêm thẻ trước nhé!")).toBeTruthy();
+    });
+
+    it("uses a stored dark theme preference while loading cards", async () => {
+        (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce("dark");
+
+        render(<StudyScreen />);
+
+        expect(await screen.findByText("Capitalism")).toBeTruthy();
     });
 });

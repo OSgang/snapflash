@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from "@testing-library/react-native";
-import { Linking } from "react-native";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react-native";
+import { DeviceEventEmitter, Linking } from "react-native";
 import SettingsScreen from "@/screens/layoutScreens/SettingsScreen";
 import { AuthService } from "@/services/AuthService";
+import * as SecureStore from "expo-secure-store";
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
@@ -26,6 +27,9 @@ jest.mock("@/services/AuthService", () => ({
 describe("SettingsScreen", () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+        (SecureStore.setItemAsync as jest.Mock).mockResolvedValue(undefined);
+        (SecureStore.deleteItemAsync as jest.Mock).mockResolvedValue(undefined);
         (AuthService.logout as jest.Mock).mockResolvedValue(undefined);
     });
 
@@ -75,5 +79,64 @@ describe("SettingsScreen", () => {
         expect(AuthService.logout).toHaveBeenCalled();
         expect(await screen.findByText("Log Out")).toBeTruthy();
         expect(mockReplace).toHaveBeenCalledWith("/login");
+    });
+
+    it("loads stored settings and saves theme preferences", async () => {
+        (SecureStore.getItemAsync as jest.Mock).mockImplementation((key: string) => {
+            if (key === "dailyGoal") return Promise.resolve("42");
+            if (key === "themePreference") return Promise.resolve("dark");
+            if (key === "username") return Promise.resolve("Alice");
+            return Promise.resolve(null);
+        });
+        const emitSpy = jest.spyOn(DeviceEventEmitter, "emit");
+
+        render(<SettingsScreen />);
+
+        expect(await screen.findByText("Alice")).toBeTruthy();
+        expect(screen.getByText("42 words")).toBeTruthy();
+
+        fireEvent.press(screen.getByText("Light"));
+        await waitFor(() => {
+            expect(SecureStore.setItemAsync).toHaveBeenCalledWith("themePreference", "light");
+            expect(emitSpy).toHaveBeenCalledWith("themeChanged", "light");
+        });
+    });
+
+    it("keeps the existing goal when saving a blank value and supports cancel", () => {
+        render(<SettingsScreen />);
+
+        fireEvent.press(screen.getByText("Daily Goal"));
+        fireEvent.changeText(screen.getByDisplayValue("20"), "   ");
+        fireEvent.press(screen.getByText("Save"));
+
+        expect(screen.getByText("20 words")).toBeTruthy();
+
+        fireEvent.press(screen.getByText("Daily Goal"));
+        fireEvent.press(screen.getByText("Cancel"));
+        expect(screen.queryByText("Set Daily Goal")).toBeNull();
+    });
+
+    it("still routes to login when logout fails", async () => {
+        jest.spyOn(console, "error").mockImplementationOnce(jest.fn());
+        (AuthService.logout as jest.Mock).mockRejectedValueOnce("offline");
+
+        render(<SettingsScreen />);
+        fireEvent.press(screen.getByText("Log Out"));
+
+        await waitFor(() => {
+            expect(mockReplace).toHaveBeenCalledWith("/login");
+        });
+    });
+
+    it("logs but continues when theme saving fails", async () => {
+        jest.spyOn(console, "log").mockImplementationOnce(jest.fn());
+        (SecureStore.setItemAsync as jest.Mock).mockRejectedValueOnce("storage-full");
+
+        render(<SettingsScreen />);
+        fireEvent.press(screen.getByText("Dark"));
+
+        await waitFor(() => {
+            expect(SecureStore.setItemAsync).toHaveBeenCalledWith("themePreference", "dark");
+        });
     });
 });

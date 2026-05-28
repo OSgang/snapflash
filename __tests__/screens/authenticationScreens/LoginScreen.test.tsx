@@ -2,6 +2,7 @@ import { Alert } from "react-native";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 import LoginScreen from "@/screens/authenticationScreens/LoginScreen";
 import { AuthService } from "@/services/AuthService";
+import * as SecureStore from "expo-secure-store";
 
 const mockReplace = jest.fn();
 const mockPush = jest.fn();
@@ -22,6 +23,8 @@ describe("LoginScreen", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         jest.spyOn(Alert, "alert").mockImplementation(jest.fn());
+        (SecureStore.getItemAsync as jest.Mock).mockResolvedValue(null);
+        (SecureStore.setItemAsync as jest.Mock).mockResolvedValue(undefined);
         (AuthService.login as jest.Mock).mockResolvedValue({ jwtToken: "token" });
     });
 
@@ -56,5 +59,27 @@ describe("LoginScreen", () => {
         expect(mockPush).toHaveBeenCalledWith("/signup");
         fireEvent.press(screen.getByText("Forgot password?"));
         expect(mockPush).toHaveBeenCalledWith("/forgot-password");
+    });
+
+    it("shows an invalid token alert when login returns no token", async () => {
+        (AuthService.login as jest.Mock).mockResolvedValueOnce({});
+
+        render(<LoginScreen />);
+        fireEvent.changeText(screen.getByPlaceholderText("Enter your username..."), "example");
+        fireEvent.changeText(screen.getByPlaceholderText("Enter your password..."), "secret");
+        fireEvent.press(screen.getByText("Sign in"));
+
+        await waitFor(() => {
+            expect(Alert.alert).toHaveBeenCalledWith("Thất bại", "Token không hợp lệ từ máy chủ");
+        });
+        expect(mockReplace).not.toHaveBeenCalled();
+    });
+
+    it("uses a stored dark theme preference", async () => {
+        (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce("dark");
+
+        render(<LoginScreen />);
+
+        expect(await screen.findByText("Sign in")).toBeTruthy();
     });
 });
