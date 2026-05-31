@@ -41,7 +41,10 @@ class SecurityConfig (
                     ).permitAll()
 
                     // This will allow any error to be shown when it is thrown
-                    .requestMatchers("/error").permitAll()
+                    .requestMatchers(
+                    "/error",
+                    "/api/docs/**"
+                    ).permitAll()
 
                     .requestMatchers(
                         HttpMethod.GET,
